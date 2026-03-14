@@ -4,7 +4,7 @@
   const ACTIVE_USER_KEY = 'budgetwise_active_user_id';
   const DB_BLOB_KEY = 'budgetwise_db_v1';
   const DATA_VERSION_KEY = 'budgetwise_data_version';
-  const DATA_VERSION_VALUE = '2';
+  const DATA_VERSION_VALUE = '3';
   const EXCLUDED_TX_KEY = 'budgetwise_excluded_tx_ids';
   const PEOPLE_OWE_KEY = 'budgetwise_people_owe_v1';
   const PEOPLE_IOWE_KEY = 'budgetwise_people_iowe_v1';
@@ -166,7 +166,7 @@
     }
 
     const upbeat = delta > 0;
-    const pieces = upbeat ? 42 : 34;
+    const pieces = upbeat ? 140 : 110;
 
     moodTargets.forEach((el) => {
       el.classList.remove('mood-up', 'mood-down');
@@ -185,9 +185,9 @@
         particle.className = 'networth-particle';
         particle.style.left = `${4 + Math.random() * 92}%`;
         particle.style.top = `${upbeat ? 24 + Math.random() * 26 : 2 + Math.random() * 20}%`;
-        particle.style.setProperty('--dx', `${-90 + Math.random() * 180}px`);
-        particle.style.setProperty('--delay', `${Math.random() * 0.3}s`);
-        particle.style.setProperty('--dur', `${0.95 + Math.random() * 0.75}s`);
+        particle.style.setProperty('--dx', `${-150 + Math.random() * 300}px`);
+        particle.style.setProperty('--delay', `${Math.random() * 0.36}s`);
+        particle.style.setProperty('--dur', `${1.05 + Math.random() * 0.95}s`);
         particle.style.setProperty('--rot', `${Math.random() * 360}deg`);
         fxHost.appendChild(particle);
       }
@@ -201,7 +201,7 @@
       moodTargets.forEach((el) => {
         el.classList.remove('mood-up', 'mood-down');
       });
-    }, 1600);
+    }, 2100);
   }
 
   function currentPage() {
