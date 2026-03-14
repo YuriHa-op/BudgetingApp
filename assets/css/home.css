@@ -204,11 +204,13 @@
 
 .calendar-insight-image {
     margin-top: 1.2rem;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     overflow: hidden;
-    border: 1px solid rgba(86, 67, 150, 0.2);
-    height: 200px;
-    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    height: 220px;
+    box-shadow: var(--shadow-md);
+    background: var(--panel-soft);
+    backdrop-filter: blur(8px);
 }
 
 .calendar-insight-image img {
@@ -216,7 +218,22 @@
     height: 100%;
     object-fit: cover;
     display: block;
-    opacity: 0.85;
+    opacity: 0.9;
+}
+
+.stewardship-quote {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    border-left: 4px solid var(--bg-b);
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    line-height: 1.5;
+    color: var(--ink-700);
+    font-style: italic;
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
 }
 
 .tx-day {
