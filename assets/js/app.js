@@ -1431,6 +1431,9 @@
     }
 
     worthValue.textContent = money(netWorth);
+    worthValue.classList.toggle('negative', netWorth < 0);
+    worthValue.classList.toggle('positive', netWorth >= 0);
+
     if (include) {
       worthSubtext.textContent = `Accounts ${money(accountsTotal)} + Owed to you ${money(peopleOweTotal)} - You owe ${money(peopleIOweTotal)}`;
     } else {
@@ -1502,7 +1505,7 @@
         return `
           <div class="account-row" data-account-id="${account.id}" title="Click to manage account">
             <p class="account-name"><span class="account-icon">${escapeHtml(initials(account.name))}</span>${escapeHtml(account.name)}</p>
-            <p class="account-value">${escapeHtml(money(account.balance))}</p>
+            <p class="account-value positive">${escapeHtml(money(account.balance))}</p>
           </div>
         `;
       }).join('');
@@ -1515,7 +1518,7 @@
         return `
           <div class="owe-row" data-list-type="owe" data-people-id="${row.id}" title="Click to manage entry">
             <p class="owe-name"><span class="account-icon">${escapeHtml(initials(row.name))}</span>${escapeHtml(row.name)}</p>
-            <p class="owe-value">${escapeHtml(money(row.amount))}</p>
+            <p class="owe-value positive">${escapeHtml(money(row.amount))}</p>
           </div>
         `;
       }).join('');
@@ -1528,7 +1531,7 @@
         return `
           <div class="owe-row" data-list-type="iowe" data-people-id="${row.id}" title="Click to manage entry">
             <p class="owe-name"><span class="account-icon">${escapeHtml(initials(row.name))}</span>${escapeHtml(row.name)}</p>
-            <p class="owe-value">${escapeHtml(money(row.amount))}</p>
+            <p class="owe-value negative">${escapeHtml(money(row.amount))}</p>
           </div>
         `;
       }).join('');
