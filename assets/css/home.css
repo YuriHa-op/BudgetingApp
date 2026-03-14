@@ -5,6 +5,14 @@
     align-items: start;
 }
 
+.home-left-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    position: sticky;
+    top: 0.8rem;
+}
+
 .calendar-shell {
     border: 1px solid rgba(255, 255, 255, 0.45);
     border-radius: var(--radius-lg);
@@ -12,8 +20,6 @@
     background: var(--panel-soft);
     box-shadow: var(--shadow-md);
     backdrop-filter: blur(8px);
-    position: sticky;
-    top: 0.8rem;
 }
 
 .home-shell {
@@ -174,7 +180,7 @@
 #homeTransactions {
     max-height: 800px;
     overflow-y: auto;
-    padding-right: 0.5rem;
+    padding: 1rem;
     scrollbar-width: thin;
     scrollbar-color: rgba(73, 57, 132, 0.2) transparent;
 }
@@ -207,18 +213,17 @@
     border-radius: var(--radius-lg);
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.45);
-    height: 220px;
+    height: 180px;
     box-shadow: var(--shadow-md);
-    background: var(--panel-soft);
+    background: #000;
     backdrop-filter: blur(8px);
 }
-
 .calendar-insight-image img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     display: block;
-    opacity: 0.9;
+    opacity: 1;
 }
 
 .stewardship-quote {
@@ -252,9 +257,9 @@
     align-items: center;
     justify-content: space-between;
     gap: 0.8rem;
-    padding: 1.25rem 1.5rem;
-    margin-bottom: 1rem;
-    min-height: 112px;
+    padding: 0.95rem 1rem;
+    margin-bottom: 0.7rem;
+    min-height: 86px;
     cursor: pointer;
 }
 
@@ -270,26 +275,26 @@
 }
 
 .tx-avatar {
-    width: 54px;
-    height: 54px;
+    width: 42px;
+    height: 42px;
     border-radius: 14px;
     display: grid;
     place-items: center;
     background: #f7f4ff;
     border: 1px solid rgba(75, 54, 123, 0.2);
-    font-size: 1.8rem;
+    font-size: 1.4rem;
 }
 
 .tx-title {
     font-weight: 800;
     line-height: 1.1;
-    font-size: 1.25rem;
+    font-size: 1.03rem;
 }
 
 .tx-sub {
     margin-top: 0.2rem;
     color: var(--ink-700);
-    font-size: 1.1rem;
+    font-size: 0.98rem;
 }
 
 .tx-right {
@@ -298,7 +303,7 @@
 
 .tx-amount {
     font-weight: 900;
-    font-size: 1.45rem;
+    font-size: 1.18rem;
 }
 
 .tx-amount.positive {

@@ -2,6 +2,9 @@
   'use strict';
 
   const ACTIVE_USER_KEY = 'budgetwise_active_user_id';
+  const DB_BLOB_KEY = 'budgetwise_db_v1';
+  const DATA_VERSION_KEY = 'budgetwise_data_version';
+  const DATA_VERSION_VALUE = '2';
   const EXCLUDED_TX_KEY = 'budgetwise_excluded_tx_ids';
   const PEOPLE_OWE_KEY = 'budgetwise_people_owe_v1';
   const PEOPLE_IOWE_KEY = 'budgetwise_people_iowe_v1';
@@ -10,6 +13,7 @@
   const WEEKLY_FORECAST_GOAL_KEY = 'budgetwise_weekly_forecast_goal_v1';
   const MONTHLY_OVERVIEW_MONTH_KEY = 'budgetwise_monthly_overview_month';
   const HOME_PAGE = 'home.html';
+  const AUTH_PAGE = 'auth.html';
 
   let db = null;
   let activeUser = null;
@@ -87,6 +91,13 @@
     return window.location.pathname.split('/').pop() || HOME_PAGE;
   }
 
+  function authPagePath() {
+    if (window.location.pathname.includes('/pages/')) {
+      return '../auth.html';
+    }
+    return 'auth.html';
+  }
+
   function schemaPathForPage() {
     if (window.location.pathname.includes('/pages/')) {
       return '../schema.sql';
@@ -95,14 +106,21 @@
   }
 
   function includeOwed() {
-    return localStorage.getItem(INCLUDE_OWED_KEY) === '1';
+    return localStorage.getItem(userScopedKey(INCLUDE_OWED_KEY)) === '1';
   }
 
   function setIncludeOwed(value) {
-    localStorage.setItem(INCLUDE_OWED_KEY, value ? '1' : '0');
+    localStorage.setItem(userScopedKey(INCLUDE_OWED_KEY), value ? '1' : '0');
   }
 
-  function readOrCreateUser() {
+  function userScopedKey(baseKey) {
+    if (!activeUser || !activeUser.id) {
+      return baseKey;
+    }
+    return `${baseKey}_${activeUser.id}`;
+  }
+
+  function readActiveUser() {
     const savedId = Number(localStorage.getItem(ACTIVE_USER_KEY));
     if (savedId) {
       const found = db.getUserById(savedId);
@@ -111,25 +129,12 @@
       }
     }
 
-    let demoUser = db.getUserByIdentity('demo');
-    if (!demoUser) {
-      demoUser = db.createUser({
-        username: 'demo',
-        full_name: 'Demo User',
-        mobile: null,
-        email: 'demo@budgetwise.local',
-        password_hash: 'local-only',
-        allowance_day: 20
-      });
-    }
-
-    localStorage.setItem(ACTIVE_USER_KEY, String(demoUser.id));
-    return demoUser;
+    return null;
   }
 
   function getExcludedSet() {
     try {
-      const value = localStorage.getItem(EXCLUDED_TX_KEY);
+      const value = localStorage.getItem(userScopedKey(EXCLUDED_TX_KEY));
       const parsed = value ? JSON.parse(value) : [];
       return new Set(parsed.map((id) => Number(id)).filter((id) => Number.isFinite(id)));
     } catch (_error) {
@@ -138,11 +143,11 @@
   }
 
   function saveExcludedSet(setRef) {
-    localStorage.setItem(EXCLUDED_TX_KEY, JSON.stringify(Array.from(setRef)));
+    localStorage.setItem(userScopedKey(EXCLUDED_TX_KEY), JSON.stringify(Array.from(setRef)));
   }
 
   function getPeopleByType(type) {
-    const key = type === 'iowe' ? PEOPLE_IOWE_KEY : PEOPLE_OWE_KEY;
+    const key = userScopedKey(type === 'iowe' ? PEOPLE_IOWE_KEY : PEOPLE_OWE_KEY);
     try {
       const raw = localStorage.getItem(key);
       if (!raw) {
@@ -165,7 +170,7 @@
   }
 
   function savePeopleByType(type, rows) {
-    const key = type === 'iowe' ? PEOPLE_IOWE_KEY : PEOPLE_OWE_KEY;
+    const key = userScopedKey(type === 'iowe' ? PEOPLE_IOWE_KEY : PEOPLE_OWE_KEY);
     localStorage.setItem(key, JSON.stringify(rows));
   }
 
@@ -175,77 +180,51 @@
     return max + 1;
   }
 
-  function seedDemoData(userId) {
-    const accountCount = db.queryValue('SELECT COUNT(*) AS total FROM accounts WHERE user_id = ?;', [userId]);
-    if (Number(accountCount.total) === 0) {
-      db.createAccount({ user_id: userId, name: 'BPI Savings', type: 'bank', balance: 12200 });
-      db.createAccount({ user_id: userId, name: 'Maya Wallet', type: 'ewallet', balance: 34000 });
-      db.createAccount({ user_id: userId, name: 'GCash', type: 'ewallet', balance: 7800 });
-      db.createAccount({ user_id: userId, name: 'Security Bank', type: 'bank', balance: 24500 });
-      db.createAccount({ user_id: userId, name: 'UnionBank', type: 'bank', balance: 31700 });
+  function ensureFreshStartForV2() {
+    if (localStorage.getItem(DATA_VERSION_KEY) === DATA_VERSION_VALUE) {
+      return;
     }
 
-    const transactionCount = db.queryValue('SELECT COUNT(*) AS total FROM transactions WHERE user_id = ?;', [userId]);
-    if (Number(transactionCount.total) === 0) {
-      const accounts = db.listAccounts(userId);
-      const categories = db.listCategories('all');
+    const keysToRemove = [
+      DB_BLOB_KEY,
+      ACTIVE_USER_KEY,
+      EXCLUDED_TX_KEY,
+      PEOPLE_OWE_KEY,
+      PEOPLE_IOWE_KEY,
+      INCLUDE_OWED_KEY,
+      WEEKLY_FORECAST_KEY,
+      WEEKLY_FORECAST_GOAL_KEY,
+      MONTHLY_OVERVIEW_MONTH_KEY
+    ];
 
-      const accountByName = Object.fromEntries(accounts.map((item) => [item.name, item]));
-      const categoryByName = Object.fromEntries(categories.map((item) => [item.name, item]));
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith(`${EXCLUDED_TX_KEY}_`) ||
+          key.startsWith(`${PEOPLE_OWE_KEY}_`) ||
+          key.startsWith(`${PEOPLE_IOWE_KEY}_`) ||
+          key.startsWith(`${INCLUDE_OWED_KEY}_`) ||
+          key.startsWith(`${WEEKLY_FORECAST_KEY}_`) ||
+          key.startsWith(`${WEEKLY_FORECAST_GOAL_KEY}_`)) {
+        localStorage.removeItem(key);
+      }
+    });
 
-      const seedTransactions = [
-        { title: 'water bill', merchant: 'Fawn Source', amount: 82, type: 'expense', date: '2026-03-15', category: 'Bills and Utilities', account: 'BPI Savings', formula: '-60 (water) -22 (service fee)' },
-        { title: 'ube boba', merchant: 'Kung Fu Tea', amount: 8.15, type: 'expense', date: '2026-03-12', category: 'Food and Dining', account: 'BPI Savings' },
-        { title: 'final fantasy rebirth + dlc', merchant: 'Steam', amount: 84.98, type: 'expense', date: '2026-03-11', category: 'Entertainment', account: 'BPI Savings', formula: '-69.99 (base game) -14.99 (dlc)' },
-        { title: 'korean sheet mask bundle', merchant: 'Olive Young', amount: 31.25, type: 'expense', date: '2026-03-11', category: 'Health and Medical', account: 'Maya Wallet' },
-        { title: 'transfer to hysa', merchant: 'Wealthfront', amount: 1200, type: 'expense', date: '2026-03-10', category: 'Savings', account: 'BPI Savings' },
-        { title: 'paycheck', merchant: 'Payroll', amount: 2300, type: 'income', date: '2026-03-08', category: 'Salary', account: 'BPI Savings' }
-      ];
+    keysToRemove.forEach((key) => localStorage.removeItem(key));
+    localStorage.setItem(DATA_VERSION_KEY, DATA_VERSION_VALUE);
+  }
 
-      seedTransactions.forEach((item) => {
-        const account = accountByName[item.account];
-        const category = categoryByName[item.category];
-        if (!account) {
-          return;
-        }
+  function ensureUserDefaults() {
+    const peopleOweKey = userScopedKey(PEOPLE_OWE_KEY);
+    const peopleIOweKey = userScopedKey(PEOPLE_IOWE_KEY);
+    const includeOwedKey = userScopedKey(INCLUDE_OWED_KEY);
 
-        db.createTransaction({
-          user_id: userId,
-          account_id: account.id,
-          category_id: category ? category.id : null,
-          title: item.title,
-          amount: item.amount,
-          amount_formula: item.formula || null,
-          merchant: item.merchant,
-          type: item.type,
-          date: item.date
-        });
-      });
+    if (!localStorage.getItem(peopleOweKey)) {
+      localStorage.setItem(peopleOweKey, '[]');
     }
-
-    if (!localStorage.getItem(PEOPLE_OWE_KEY)) {
-      localStorage.setItem(
-        PEOPLE_OWE_KEY,
-        JSON.stringify([
-          { id: 1, name: 'Alex', amount: 1400 },
-          { id: 2, name: 'Mia', amount: 585 },
-          { id: 3, name: 'Jon', amount: 2300 }
-        ])
-      );
+    if (!localStorage.getItem(peopleIOweKey)) {
+      localStorage.setItem(peopleIOweKey, '[]');
     }
-
-    if (!localStorage.getItem(PEOPLE_IOWE_KEY)) {
-      localStorage.setItem(
-        PEOPLE_IOWE_KEY,
-        JSON.stringify([
-          { id: 1, name: 'Liam', amount: 700 },
-          { id: 2, name: 'Noah', amount: 450 }
-        ])
-      );
-    }
-
-    if (localStorage.getItem(INCLUDE_OWED_KEY) === null) {
-      setIncludeOwed(false);
+    if (localStorage.getItem(includeOwedKey) === null) {
+      localStorage.setItem(includeOwedKey, '0');
     }
   }
 
@@ -1641,7 +1620,7 @@
 
   function getWeeklyForecastState() {
     try {
-      const parsed = JSON.parse(localStorage.getItem(WEEKLY_FORECAST_KEY) || '{}');
+      const parsed = JSON.parse(localStorage.getItem(userScopedKey(WEEKLY_FORECAST_KEY)) || '{}');
       return {
         startBalance: Number(parsed.startBalance) || 0,
         weeklyAllowance: Number(parsed.weeklyAllowance) || 0,
@@ -1663,19 +1642,19 @@
   }
 
   function setWeeklyForecastState(state) {
-    localStorage.setItem(WEEKLY_FORECAST_KEY, JSON.stringify(state));
+    localStorage.setItem(userScopedKey(WEEKLY_FORECAST_KEY), JSON.stringify(state));
   }
 
   function getWeeklyForecastGoal() {
     try {
-      return JSON.parse(localStorage.getItem(WEEKLY_FORECAST_GOAL_KEY) || 'null');
+      return JSON.parse(localStorage.getItem(userScopedKey(WEEKLY_FORECAST_GOAL_KEY)) || 'null');
     } catch (_error) {
       return null;
     }
   }
 
   function setWeeklyForecastGoal(goal) {
-    localStorage.setItem(WEEKLY_FORECAST_GOAL_KEY, JSON.stringify(goal));
+    localStorage.setItem(userScopedKey(WEEKLY_FORECAST_GOAL_KEY), JSON.stringify(goal));
   }
 
   function initWeeklyForecast() {
@@ -2068,16 +2047,54 @@
     });
   }
 
+  function attachAccountMeta() {
+    const meta = document.querySelector('.nav-meta');
+    if (!meta || !activeUser) {
+      return;
+    }
+
+    const username = activeUser.username || activeUser.full_name || 'Account';
+    meta.innerHTML = `
+      <span class="account-pill-name">${escapeHtml(username)}</span>
+      <button type="button" class="account-pill-logout" id="logoutBtn">Logout</button>
+    `;
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', function () {
+        localStorage.removeItem(ACTIVE_USER_KEY);
+        window.location.href = authPagePath();
+      });
+    }
+  }
+
   async function start() {
     if (typeof window.createBudgetDB !== 'function') {
       return;
     }
 
+    ensureFreshStartForV2();
     db = await window.createBudgetDB({ schemaPath: schemaPathForPage() });
-    activeUser = readOrCreateUser();
-    seedDemoData(activeUser.id);
-
     const page = currentPage();
+
+    activeUser = readActiveUser();
+    if (!activeUser && page !== AUTH_PAGE) {
+      window.location.href = authPagePath();
+      return;
+    }
+
+    if (activeUser && page === AUTH_PAGE) {
+      window.location.href = HOME_PAGE;
+      return;
+    }
+
+    if (!activeUser) {
+      return;
+    }
+
+    ensureUserDefaults();
+    attachAccountMeta();
+
     if (page === HOME_PAGE) {
       renderHome();
       attachHomeInteractions();

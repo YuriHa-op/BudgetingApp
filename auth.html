@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BudgetWise | Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/variables.css">
+    <link rel="stylesheet" href="assets/css/layout.css">
+    <link rel="stylesheet" href="assets/css/auth.css">
+</head>
+<body>
+    <main class="auth-page">
+        <section class="auth-shell">
+            <article class="auth-brand-card" aria-label="BudgetWise welcome">
+                <h1>BudgetWise</h1>
+                <p>Create your account, then start tracking your real budget data.</p>
+                <ul>
+                    <li>Personal account-based budgeting</li>
+                    <li>Monthly analytics and forecasting</li>
+                    <li>Local-first and private</li>
+                </ul>
+            </article>
+
+            <article class="auth-form-card">
+                <div class="auth-tabs" id="authTabGroup">
+                    <button type="button" class="auth-tab active" data-tab="login">Login</button>
+                    <button type="button" class="auth-tab" data-tab="register">Register</button>
+                </div>
+
+                <form id="loginForm" class="auth-form" autocomplete="on">
+                    <h2>Welcome back</h2>
+                    <label>
+                        <span>Username or Email</span>
+                        <input id="loginIdentity" type="text" required>
+                    </label>
+                    <label>
+                        <span>Password</span>
+                        <input id="loginPassword" type="password" required>
+                    </label>
+                    <button type="submit" class="auth-submit">Login</button>
+                </form>
+
+                <form id="registerForm" class="auth-form hidden" autocomplete="on">
+                    <h2>Create account</h2>
+                    <label>
+                        <span>Full Name</span>
+                        <input id="registerFullName" type="text" required>
+                    </label>
+                    <label>
+                        <span>Username</span>
+                        <input id="registerUsername" type="text" minlength="3" required>
+                    </label>
+                    <label>
+                        <span>Email</span>
+                        <input id="registerEmail" type="email" required>
+                    </label>
+                    <label>
+                        <span>Password</span>
+                        <input id="registerPassword" type="password" minlength="6" required>
+                    </label>
+                    <button type="submit" class="auth-submit">Register</button>
+                </form>
+
+                <p id="authFeedback" class="auth-feedback" role="status" aria-live="polite"></p>
+            </article>
+        </section>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    <script src="db.js"></script>
+    <script src="assets/js/auth.js"></script>
+</body>
+</html>

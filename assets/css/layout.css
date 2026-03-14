@@ -116,6 +116,24 @@ a {
     font-size: 0.9rem;
     color: var(--ink-700);
     font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.account-pill-name {
+    font-weight: 900;
+    color: #2f2b67;
+}
+
+.account-pill-logout {
+    border: 1px solid rgba(77, 61, 140, 0.24);
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 999px;
+    padding: 0.32rem 0.7rem;
+    font-weight: 800;
+    color: #3e376f;
+    cursor: pointer;
 }
 
 main {
