@@ -24,6 +24,96 @@
     </header>
 
     <main class="page-shell">
+        <section class="tab-card monthly-pro-board">
+            <div class="tab-head monthly-pro-head">
+                <h1 id="monthlyBoardTitle">March 2026</h1>
+                <select id="monthlyBoardMonth" class="txn-select monthly-board-select"></select>
+            </div>
+
+            <div class="monthly-pro-grid">
+                <article class="monthly-pro-card">
+                    <h2 class="monthly-pro-title">Category Breakdown</h2>
+                    <div class="monthly-cat-table-wrap">
+                        <table class="monthly-cat-table">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th class="align-right">Expected</th>
+                                    <th class="align-right">Current</th>
+                                    <th class="align-right">%</th>
+                                </tr>
+                            </thead>
+                            <tbody id="monthlyCategoryBody">
+                                <tr><td colspan="4" class="empty-row">No expense data.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+
+                <article class="monthly-pro-col-stack">
+                    <section class="monthly-pro-card">
+                        <h2 class="monthly-pro-title">Weekly Spending</h2>
+                        <p class="muted mini-note">Investments and savings excluded</p>
+                        <div class="weekly-spending-list" id="weeklySpendingList"></div>
+                        <p class="weekly-spending-summary" id="weeklySpendingSummary">Month to date: ₱0.00 · Avg/week: ₱0.00</p>
+                    </section>
+
+                    <section class="monthly-pro-card">
+                        <h2 class="monthly-pro-title">Money In / Money Out</h2>
+                        <p class="muted mini-note">Expected is full-month pace. Actual is selected month.</p>
+                        <div class="money-io-grid">
+                            <div>
+                                <h3>Expected</h3>
+                                <p id="monthlyExpectedIncome" class="positive">₱0.00</p>
+                                <p id="monthlyExpectedExpense" class="negative">₱0.00</p>
+                            </div>
+                            <div>
+                                <h3>Actual</h3>
+                                <p id="monthlyActualIncome" class="positive">₱0.00</p>
+                                <p id="monthlyActualExpense" class="negative">₱0.00</p>
+                            </div>
+                        </div>
+                        <div class="money-io-bars">
+                            <div>
+                                <span>Expected In/Out</span>
+                                <div class="bar-track"><span id="monthlyExpectedIoBar" class="bar-fill"></span></div>
+                            </div>
+                            <div>
+                                <span>Actual In/Out</span>
+                                <div class="bar-track"><span id="monthlyActualIoBar" class="bar-fill"></span></div>
+                            </div>
+                        </div>
+                    </section>
+                </article>
+
+                <article class="monthly-pro-col-stack">
+                    <section class="monthly-pro-card">
+                        <h2 class="monthly-pro-title">Top Categories</h2>
+                        <div class="monthly-chart-wrap pie-wrap">
+                            <canvas id="monthlyTopCategoriesChart"></canvas>
+                            <div class="donut-center-placeholder" aria-hidden="true">
+                                <img src="../assets/images/ren.jpg" alt="Top categories center art">
+                            </div>
+                        </div>
+                        <ul class="monthly-legend" id="monthlyTopCategoriesLegend"></ul>
+                    </section>
+
+                    <section class="monthly-pro-card">
+                        <h2 class="monthly-pro-title">Cumulative Spend Vs Budget</h2>
+                        <div class="monthly-chart-wrap line-wrap">
+                            <canvas id="monthlyCumulativeChart"></canvas>
+                        </div>
+                    </section>
+
+                    <section class="monthly-pro-card cumulative-image-card" aria-label="Monthly visual container">
+                        <div class="cumulative-image-placeholder" aria-hidden="true">
+                            <img src="../assets/gifs/month.gif" alt="Monthly overview visual">
+                        </div>
+                    </section>
+                </article>
+            </div>
+        </section>
+
         <section class="tab-card">
             <div class="tab-head">
                 <h1>Monthly Overview</h1>
@@ -128,6 +218,7 @@
     </main>
 
     <script src="../assets/js/menu.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
     <script src="../db.js"></script>
     <script src="../assets/js/app.js"></script>

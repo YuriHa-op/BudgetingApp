@@ -8,6 +8,7 @@
   const INCLUDE_OWED_KEY = 'budgetwise_include_owed';
   const WEEKLY_FORECAST_KEY = 'budgetwise_weekly_forecast_v1';
   const WEEKLY_FORECAST_GOAL_KEY = 'budgetwise_weekly_forecast_goal_v1';
+  const MONTHLY_OVERVIEW_MONTH_KEY = 'budgetwise_monthly_overview_month';
   const HOME_PAGE = 'home.html';
 
   let db = null;
@@ -24,6 +25,8 @@
   let currentPeopleMode = 'create';
   let currentPeopleItem = null;
   let pendingPeopleTxns = [];
+  let topCategoriesChart = null;
+  let cumulativeChart = null;
 
   const allTxState = {
     search: '',
@@ -251,6 +254,317 @@
 
   function currentMonthKey() {
     return new Date().toISOString().slice(0, 7);
+  }
+
+  function selectedOverviewMonth() {
+    const select = document.getElementById('monthlyBoardMonth');
+    if (select && select.value) {
+      return select.value;
+    }
+    const saved = localStorage.getItem(MONTHLY_OVERVIEW_MONTH_KEY);
+    return saved || currentMonthKey();
+  }
+
+  function monthRange(monthKey) {
+    const [year, month] = String(monthKey).split('-').map(Number);
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 0);
+    return { start, end };
+  }
+
+  function sameMonth(dateObj, monthKey) {
+    const ym = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+    return ym === monthKey;
+  }
+
+  function renderMonthlyCategoryTable(expenseRows, paceFactor) {
+    const tbody = document.getElementById('monthlyCategoryBody');
+    if (!tbody) {
+      return;
+    }
+
+    if (expenseRows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="empty-row">No expense data.</td></tr>';
+      return;
+    }
+
+    const grouped = {};
+    expenseRows.forEach((row) => {
+      const key = row.category_name || 'Uncategorized';
+      grouped[key] = (grouped[key] || 0) + Number(row.amount || 0);
+    });
+
+    const entries = Object.entries(grouped)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 16);
+
+    tbody.innerHTML = entries.map(([name, current], index) => {
+      const expected = current * paceFactor;
+      const pct = expected > 0 ? (current / expected) * 100 : 0;
+      const pctClass = pct > 100 ? 'progress-danger' : (pct > 85 ? 'progress-warn' : 'progress-good');
+      const badge = index === 0 ? '<span class="monthly-cat-badge">Top</span>' : '';
+      return `
+        <tr>
+          <td>${escapeHtml(name)} ${badge}</td>
+          <td class="align-right">${escapeHtml(money(expected))}</td>
+          <td class="align-right">${escapeHtml(money(current))}</td>
+          <td class="align-right ${pctClass}">${escapeHtml(`${pct.toFixed(0)}%`)}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function renderWeeklySpending(monthKey, txs) {
+    const listEl = document.getElementById('weeklySpendingList');
+    const summaryEl = document.getElementById('weeklySpendingSummary');
+    if (!listEl || !summaryEl) {
+      return;
+    }
+
+    const { start, end } = monthRange(monthKey);
+    const excludedExpense = new Set(['savings', 'investment']);
+    const expenseRows = txs.filter((row) => {
+      if (row.type !== 'expense') {
+        return false;
+      }
+      const cat = normalizeLower(row.category_name);
+      for (const token of excludedExpense) {
+        if (cat.includes(token)) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    const buckets = [];
+    let weekStart = new Date(start);
+    while (weekStart <= end) {
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+      if (weekEnd > end) {
+        weekEnd.setTime(end.getTime());
+      }
+      buckets.push({
+        start: new Date(weekStart),
+        end: new Date(weekEnd),
+        total: 0
+      });
+      weekStart.setDate(weekStart.getDate() + 7);
+    }
+
+    expenseRows.forEach((row) => {
+      const d = new Date(String(row.date).slice(0, 10));
+      const found = buckets.find((bucket) => d >= bucket.start && d <= bucket.end);
+      if (found) {
+        found.total += Number(row.amount || 0);
+      }
+    });
+
+    const max = Math.max(1, ...buckets.map((b) => b.total));
+    listEl.innerHTML = buckets.map((bucket) => {
+      const width = Math.max(2, (bucket.total / max) * 100);
+      const label = `${bucket.start.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}-${bucket.end.toLocaleDateString('en-PH', { day: 'numeric' })}`;
+      return `
+        <div class="weekly-spending-item">
+          <span class="week-label">${escapeHtml(label)}</span>
+          <div class="week-bar"><span style="width:${width.toFixed(1)}%"></span></div>
+          <span class="week-value">${escapeHtml(money(bucket.total))}</span>
+        </div>
+      `;
+    }).join('');
+
+    const monthTotal = buckets.reduce((sum, b) => sum + b.total, 0);
+    const avg = buckets.length > 0 ? monthTotal / buckets.length : 0;
+    summaryEl.textContent = `Month to date: ${money(monthTotal)} · Avg/week: ${money(avg)}`;
+  }
+
+  function renderMoneyInOut(expectedIncome, expectedExpense, actualIncome, actualExpense) {
+    const expectedIncomeEl = document.getElementById('monthlyExpectedIncome');
+    const expectedExpenseEl = document.getElementById('monthlyExpectedExpense');
+    const actualIncomeEl = document.getElementById('monthlyActualIncome');
+    const actualExpenseEl = document.getElementById('monthlyActualExpense');
+    const expectedIoBar = document.getElementById('monthlyExpectedIoBar');
+    const actualIoBar = document.getElementById('monthlyActualIoBar');
+
+    if (!expectedIncomeEl || !expectedExpenseEl || !actualIncomeEl || !actualExpenseEl || !expectedIoBar || !actualIoBar) {
+      return;
+    }
+
+    expectedIncomeEl.textContent = money(expectedIncome);
+    expectedExpenseEl.textContent = money(expectedExpense);
+    actualIncomeEl.textContent = money(actualIncome);
+    actualExpenseEl.textContent = money(actualExpense);
+
+    const expectedRatio = expectedIncome > 0 ? Math.min(100, (expectedExpense / expectedIncome) * 100) : 0;
+    const actualRatio = actualIncome > 0 ? Math.min(100, (actualExpense / actualIncome) * 100) : 0;
+
+    expectedIoBar.style.width = `${expectedRatio.toFixed(1)}%`;
+    actualIoBar.style.width = `${actualRatio.toFixed(1)}%`;
+  }
+
+  function renderTopCategoriesChart(expenseRows) {
+    const canvas = document.getElementById('monthlyTopCategoriesChart');
+    const legend = document.getElementById('monthlyTopCategoriesLegend');
+    if (!canvas || !legend) {
+      return;
+    }
+
+    const grouped = {};
+    expenseRows.forEach((row) => {
+      const key = row.category_name || 'Uncategorized';
+      grouped[key] = (grouped[key] || 0) + Number(row.amount || 0);
+    });
+
+    const entries = Object.entries(grouped).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    const labels = entries.map(([name]) => name);
+    const values = entries.map(([, value]) => value);
+    const total = values.reduce((sum, n) => sum + n, 0);
+    const palette = ['#6e7ff0', '#f08ca0', '#7bc6ff', '#f5ba65', '#8ad17f', '#bb96f4', '#64d8c0', '#f391d4'];
+
+    legend.innerHTML = entries.length === 0
+      ? '<li><span class="left">No data</span><span>0%</span></li>'
+      : entries.map(([name, amount], idx) => {
+        const pct = total > 0 ? (amount / total) * 100 : 0;
+        return `<li><span class="left"><span class="dot" style="background:${palette[idx % palette.length]}"></span>${escapeHtml(name)}</span><span>${escapeHtml(`${pct.toFixed(1)}%`)}</span></li>`;
+      }).join('');
+
+    if (!window.Chart) {
+      return;
+    }
+
+    if (topCategoriesChart) {
+      topCategoriesChart.destroy();
+      topCategoriesChart = null;
+    }
+
+    topCategoriesChart = new window.Chart(canvas, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data: values,
+          backgroundColor: labels.map((_, idx) => palette[idx % palette.length]),
+          borderWidth: 0,
+          hoverOffset: 2
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                return `${context.label}: ${money(context.parsed)}`;
+              }
+            }
+          }
+        },
+        cutout: '52%'
+      }
+    });
+  }
+
+  function renderCumulativeChart(monthKey, expenseRows) {
+    const canvas = document.getElementById('monthlyCumulativeChart');
+    if (!canvas || !window.Chart) {
+      return;
+    }
+
+    const { start, end } = monthRange(monthKey);
+    const days = end.getDate();
+    const labels = [];
+    const actualSeries = [];
+    const budgetSeries = [];
+
+    const byDay = {};
+    expenseRows.forEach((row) => {
+      const d = new Date(String(row.date).slice(0, 10));
+      const day = d.getDate();
+      byDay[day] = (byDay[day] || 0) + Number(row.amount || 0);
+    });
+
+    const weeklyState = getWeeklyForecastState();
+    const monthlyBudget = Math.max(0, Number(weeklyState.weeklyExpenses || 0)) * 4.345;
+    const pacePerDay = days > 0 ? monthlyBudget / days : 0;
+    let actualRunning = 0;
+    let budgetRunning = 0;
+
+    for (let day = 1; day <= days; day += 1) {
+      const current = new Date(start.getFullYear(), start.getMonth(), day);
+      labels.push(current.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' }));
+      actualRunning += Number(byDay[day] || 0);
+      budgetRunning += pacePerDay;
+      actualSeries.push(Number(actualRunning.toFixed(2)));
+      budgetSeries.push(Number(budgetRunning.toFixed(2)));
+    }
+
+    if (cumulativeChart) {
+      cumulativeChart.destroy();
+      cumulativeChart = null;
+    }
+
+    cumulativeChart = new window.Chart(canvas, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Actual',
+            data: actualSeries,
+            borderColor: '#f08ca0',
+            backgroundColor: 'rgba(240, 140, 160, 0.15)',
+            borderWidth: 2,
+            pointRadius: 0,
+            tension: 0.25
+          },
+          {
+            label: 'Budget Pace',
+            data: budgetSeries,
+            borderColor: '#6e7ff0',
+            borderDash: [5, 4],
+            borderWidth: 2,
+            pointRadius: 0,
+            tension: 0.2
+          }
+        ]
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: {
+              boxWidth: 12,
+              color: '#4c487d'
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                return `${context.dataset.label}: ${money(context.parsed.y)}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { maxTicksLimit: 6, color: '#635f8f' },
+            grid: { color: 'rgba(102, 80, 171, 0.1)' }
+          },
+          y: {
+            ticks: {
+              color: '#635f8f',
+              callback: function (value) {
+                return money(value);
+              }
+            },
+            grid: { color: 'rgba(102, 80, 171, 0.12)' }
+          }
+        }
+      }
+    });
   }
 
   function currentYearKey() {
@@ -1255,8 +1569,17 @@
       return;
     }
 
-    const nowMonth = new Date().toISOString().slice(0, 7);
-    const txs = db.listTransactions(activeUser.id, { month: nowMonth });
+    const monthKey = selectedOverviewMonth();
+    const txs = db.listTransactions(activeUser.id, { month: monthKey });
+
+    const monthTitle = document.getElementById('monthlyBoardTitle');
+    if (monthTitle) {
+      const [year, month] = monthKey.split('-').map(Number);
+      monthTitle.textContent = new Date(year, month - 1, 1).toLocaleDateString('en-PH', {
+        month: 'long',
+        year: 'numeric'
+      });
+    }
 
     const totals = txs.reduce((acc, item) => {
       if (item.type === 'income') {
@@ -1277,13 +1600,31 @@
     savingsRateEl.textContent = `${savingsRate.toFixed(1)}%`;
 
     const grouped = {};
-    txs.filter((item) => item.type === 'expense').forEach((item) => {
+    const expenseRows = txs.filter((item) => item.type === 'expense');
+    expenseRows.forEach((item) => {
       const key = item.category_name || 'Uncategorized';
       grouped[key] = (grouped[key] || 0) + Number(item.amount || 0);
     });
 
     const top = Object.entries(grouped).sort((a, b) => b[1] - a[1])[0];
     topCategoryEl.textContent = top ? `${top[0]} (${money(top[1])})` : 'No expense data yet';
+
+    const { end } = monthRange(monthKey);
+    const today = new Date();
+    let daysElapsed = end.getDate();
+    if (sameMonth(today, monthKey)) {
+      daysElapsed = Math.max(1, Math.min(end.getDate(), today.getDate()));
+    }
+    const paceFactor = end.getDate() / Math.max(1, daysElapsed);
+
+    const expectedIncome = totals.income * paceFactor;
+    const expectedExpense = totals.expense * paceFactor;
+
+    renderMonthlyCategoryTable(expenseRows, paceFactor);
+    renderWeeklySpending(monthKey, txs);
+    renderMoneyInOut(expectedIncome, expectedExpense, totals.income, totals.expense);
+    renderTopCategoriesChart(expenseRows);
+    renderCumulativeChart(monthKey, expenseRows);
   }
 
   function getWeeklyForecastState() {
@@ -1503,6 +1844,26 @@
   }
 
   function initMonthlyOverviewPage() {
+    const monthSelect = document.getElementById('monthlyBoardMonth');
+    if (monthSelect) {
+      const today = new Date();
+      const options = [];
+      for (let i = -6; i <= 6; i += 1) {
+        const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
+        const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        const label = d.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' });
+        options.push(`<option value="${ym}">${escapeHtml(label)}</option>`);
+      }
+      monthSelect.innerHTML = options.join('');
+
+      const saved = localStorage.getItem(MONTHLY_OVERVIEW_MONTH_KEY) || currentMonthKey();
+      monthSelect.value = saved;
+      monthSelect.addEventListener('change', function () {
+        localStorage.setItem(MONTHLY_OVERVIEW_MONTH_KEY, monthSelect.value);
+        renderMonthlyOverview();
+      });
+    }
+
     renderMonthlyOverview();
     initWeeklyForecast();
   }
