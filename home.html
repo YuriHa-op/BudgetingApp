@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css">
     <link rel="stylesheet" href="assets/css/variables.css">
     <link rel="stylesheet" href="assets/css/layout.css">
     <link rel="stylesheet" href="assets/css/home.css">
@@ -24,16 +25,25 @@
     </header>
 
     <main>
-        <section class="home-shell">
-            <article class="column">
+        <section class="home-layout">
+            <article class="calendar-shell">
                 <div class="section-head">
-                    <h1 class="section-title">Transactions</h1>
-                    <button class="pill pill-btn" id="addTransactionBtn" type="button">NEW +</button>
+                    <h1 class="section-title">Transaction Calendar</h1>
                 </div>
-                <div id="homeTransactions"></div>
+                <p class="calendar-note">Click a date to add a transaction. Click an entry to edit it.</p>
+                <div id="homeCalendar" class="home-calendar"></div>
             </article>
 
-            <aside class="column">
+            <section class="home-shell">
+                <article class="column">
+                    <div class="section-head">
+                        <h1 class="section-title">Transactions</h1>
+                        <button class="pill pill-btn" id="addTransactionBtn" type="button">NEW +</button>
+                    </div>
+                    <div id="homeTransactions"></div>
+                </article>
+
+                <aside class="column">
                 <div class="section-head">
                     <h2 class="section-title">Net Worth</h2>
                     <div class="pill-group">
@@ -45,6 +55,13 @@
                 <div class="networth-box">
                     <p class="networth-value" id="netWorthValue">₱0.00</p>
                     <p class="subtext" id="netWorthSubtext">Linked to your live database totals</p>
+                    <div class="goal-progress-box" id="goalProgressBox">
+                        <p class="goal-progress-label" id="goalProgressLabel">Goal Progress: No saved forecast goal yet.</p>
+                        <div class="goal-progress-track" aria-hidden="true">
+                            <span class="goal-progress-fill" id="goalProgressFill"></span>
+                        </div>
+                        <p class="goal-progress-meta" id="goalProgressMeta">Save a goal in Monthly Overview to track it here.</p>
+                    </div>
                     <div class="hero-banner" aria-hidden="true">
                         <img src="assets/gifs/home.gif" alt="Home banner animation">
                     </div>
@@ -76,7 +93,8 @@
                     </div>
                     <div id="homePeopleIOwe"></div>
                 </section>
-            </aside>
+                </aside>
+            </section>
         </section>
     </main>
 
@@ -221,6 +239,7 @@
     </div>
 
     <script src="assets/js/menu.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
     <script src="db.js"></script>
     <script src="assets/js/app.js"></script>

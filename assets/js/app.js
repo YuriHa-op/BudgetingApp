@@ -6,12 +6,15 @@
   const PEOPLE_OWE_KEY = 'budgetwise_people_owe_v1';
   const PEOPLE_IOWE_KEY = 'budgetwise_people_iowe_v1';
   const INCLUDE_OWED_KEY = 'budgetwise_include_owed';
+  const WEEKLY_FORECAST_KEY = 'budgetwise_weekly_forecast_v1';
+  const WEEKLY_FORECAST_GOAL_KEY = 'budgetwise_weekly_forecast_goal_v1';
   const HOME_PAGE = 'home.html';
 
   let db = null;
   let activeUser = null;
   let editingTransaction = null;
   let transactionMode = 'edit';
+  let homeCalendar = null;
 
   let currentAccountMode = 'create';
   let currentAccount = null;
@@ -404,6 +407,75 @@
     modal.classList.remove('open');
     modal.setAttribute('aria-hidden', 'true');
     editingTransaction = null;
+  }
+
+  function getCalendarEvents(transactions) {
+    return transactions.map((txn) => {
+      const isIncome = txn.type === 'income';
+      const sign = isIncome ? '+' : '-';
+      return {
+        id: String(txn.id),
+        start: String(txn.date).slice(0, 10),
+        allDay: true,
+        title: `${sign}${money(txn.amount)} · ${txn.title || 'Transaction'}`,
+        backgroundColor: isIncome ? '#1f9f6e' : '#d04a72',
+        borderColor: isIncome ? '#1f9f6e' : '#d04a72',
+        extendedProps: {
+          txnId: Number(txn.id)
+        }
+      };
+    });
+  }
+
+  function syncHomeCalendar(transactions) {
+    const calendarEl = document.getElementById('homeCalendar');
+    if (!calendarEl || !window.FullCalendar) {
+      return;
+    }
+
+    const events = getCalendarEvents(transactions);
+
+    if (!homeCalendar) {
+      homeCalendar = new window.FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        height: 'auto',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay,multiMonthYear'
+        },
+        buttonText: {
+          today: 'Today',
+          dayGridMonth: 'Month',
+          timeGridWeek: 'Week',
+          timeGridDay: 'Day',
+          multiMonthYear: 'Year'
+        },
+        dayMaxEventRows: 3,
+        events,
+        dateClick: function (info) {
+          openTransactionModal('add');
+          const dateInput = document.getElementById('editTxnDate');
+          if (dateInput) {
+            dateInput.value = String(info.dateStr).slice(0, 10);
+          }
+        },
+        eventClick: function (info) {
+          const txnId = Number(info.event.extendedProps.txnId || info.event.id);
+          if (txnId) {
+            openTransactionModal('edit', txnId);
+          }
+        }
+      });
+
+      homeCalendar.render();
+      return;
+    }
+
+    homeCalendar.removeAllEvents();
+    events.forEach((eventObj) => {
+      homeCalendar.addEvent(eventObj);
+    });
   }
 
   function saveTransaction() {
@@ -849,6 +921,9 @@
     const iOweContainer = document.getElementById('homePeopleIOwe');
     const worthValue = document.getElementById('netWorthValue');
     const worthSubtext = document.getElementById('netWorthSubtext');
+    const goalProgressLabel = document.getElementById('goalProgressLabel');
+    const goalProgressFill = document.getElementById('goalProgressFill');
+    const goalProgressMeta = document.getElementById('goalProgressMeta');
     const accountsTotalValue = document.getElementById('accountsTotalValue');
     const peopleOweTotalValue = document.getElementById('peopleOweTotalValue');
     const peopleIOweTotalValue = document.getElementById('peopleIOweTotalValue');
@@ -861,7 +936,8 @@
     }
 
     const excludedSet = getExcludedSet();
-    const transactions = db.listTransactions(activeUser.id).slice(0, 12).filter((txn) => !excludedSet.has(Number(txn.id)));
+    const allTransactions = db.listTransactions(activeUser.id).filter((txn) => !excludedSet.has(Number(txn.id)));
+    const transactions = allTransactions.slice(0, 12);
     const accounts = db.listAccounts(activeUser.id);
 
     const peopleOweRows = getPeopleByType('owe');
@@ -897,6 +973,32 @@
       owedOffBtn.classList.toggle('active', !include);
       owedOnBtn.classList.toggle('active', include);
     }
+
+    if (goalProgressLabel && goalProgressFill && goalProgressMeta) {
+      const savedGoal = getWeeklyForecastGoal();
+      if (!savedGoal || !Number.isFinite(Number(savedGoal.target))) {
+        goalProgressLabel.textContent = 'Goal Progress: No saved forecast goal yet.';
+        goalProgressMeta.textContent = 'Save a goal in Monthly Overview to track it here.';
+        goalProgressFill.style.width = '0%';
+      } else {
+        const target = Number(savedGoal.target);
+        let percent = 0;
+
+        if (target <= 0) {
+          percent = netWorth >= target ? 100 : 0;
+        } else {
+          percent = (netWorth / target) * 100;
+        }
+
+        const clamped = Math.max(0, Math.min(100, percent));
+        goalProgressFill.style.width = `${clamped.toFixed(1)}%`;
+
+        goalProgressLabel.textContent = `Goal Progress: ${clamped.toFixed(1)}%`;
+        goalProgressMeta.textContent = `${money(netWorth)} of ${money(target)} target (${savedGoal.presetLabel || 'Custom'}, ${savedGoal.weeks || 0} weeks)`;
+      }
+    }
+
+    syncHomeCalendar(allTransactions);
 
     if (transactions.length === 0) {
       txContainer.innerHTML = '<p class="empty-copy">No transactions yet.</p>';
@@ -1184,6 +1286,227 @@
     topCategoryEl.textContent = top ? `${top[0]} (${money(top[1])})` : 'No expense data yet';
   }
 
+  function getWeeklyForecastState() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(WEEKLY_FORECAST_KEY) || '{}');
+      return {
+        startBalance: Number(parsed.startBalance) || 0,
+        weeklyAllowance: Number(parsed.weeklyAllowance) || 0,
+        weeklyExpenses: Number(parsed.weeklyExpenses) || 0,
+        weeks: Math.max(1, Math.floor(Number(parsed.weeks) || 1)),
+        riskPercent: Math.max(0, Number(parsed.riskPercent) || 0),
+        extraWeekly: Math.max(0, Number(parsed.extraWeekly) || 0)
+      };
+    } catch (error) {
+      return {
+        startBalance: 0,
+        weeklyAllowance: 0,
+        weeklyExpenses: 0,
+        weeks: 1,
+        riskPercent: 0,
+        extraWeekly: 0
+      };
+    }
+  }
+
+  function setWeeklyForecastState(state) {
+    localStorage.setItem(WEEKLY_FORECAST_KEY, JSON.stringify(state));
+  }
+
+  function getWeeklyForecastGoal() {
+    try {
+      return JSON.parse(localStorage.getItem(WEEKLY_FORECAST_GOAL_KEY) || 'null');
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function setWeeklyForecastGoal(goal) {
+    localStorage.setItem(WEEKLY_FORECAST_GOAL_KEY, JSON.stringify(goal));
+  }
+
+  function initWeeklyForecast() {
+    const startDateEl = document.getElementById('forecastStartDate');
+    const startBalanceInput = document.getElementById('forecastStartBalance');
+    const weeklyAllowanceInput = document.getElementById('forecastWeeklyAllowance');
+    const weeklyExpensesInput = document.getElementById('forecastWeeklyExpenses');
+    const weeksInput = document.getElementById('forecastWeeks');
+    const riskPercentInput = document.getElementById('forecastRiskPercent');
+    const extraWeeklyInput = document.getElementById('forecastExtraWeekly');
+    const useCurrentBtn = document.getElementById('forecastUseCurrentBalance');
+    const saveGoalBtn = document.getElementById('forecastSaveGoal');
+    const presetGroup = document.getElementById('forecastPresetGroup');
+    const goalText = document.getElementById('forecastGoalText');
+
+    const inflowEl = document.getElementById('forecastInflowTotal');
+    const plannedOutflowEl = document.getElementById('forecastPlannedOutflow');
+    const riskOutflowEl = document.getElementById('forecastRiskOutflow');
+    const projectedEl = document.getElementById('forecastProjected');
+    const conservativeEl = document.getElementById('forecastConservative');
+    const weeklySafeEl = document.getElementById('forecastWeeklySafe');
+
+    if (
+      !startDateEl || !startBalanceInput || !weeklyAllowanceInput || !weeklyExpensesInput ||
+      !weeksInput || !riskPercentInput || !extraWeeklyInput || !useCurrentBtn || !saveGoalBtn || !presetGroup || !goalText ||
+      !inflowEl || !plannedOutflowEl || !riskOutflowEl || !projectedEl || !conservativeEl || !weeklySafeEl
+    ) {
+      return;
+    }
+
+    const today = new Date().toLocaleDateString('en-PH', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+    startDateEl.textContent = `Starting today: ${today}`;
+
+    const accountTotal = db.listAccounts(activeUser.id).reduce((sum, account) => {
+      return sum + Number(account.balance || 0);
+    }, 0);
+
+    const saved = getWeeklyForecastState();
+    const initialState = {
+      ...saved,
+      startBalance: saved.startBalance > 0 ? saved.startBalance : accountTotal
+    };
+
+    startBalanceInput.value = String(initialState.startBalance);
+    weeklyAllowanceInput.value = String(initialState.weeklyAllowance);
+    weeklyExpensesInput.value = String(initialState.weeklyExpenses);
+    weeksInput.value = String(initialState.weeks);
+    riskPercentInput.value = String(initialState.riskPercent);
+    extraWeeklyInput.value = String(initialState.extraWeekly);
+
+    const savedGoal = getWeeklyForecastGoal();
+    if (savedGoal) {
+      goalText.textContent = `${savedGoal.savedAt}: ${savedGoal.weeks} weeks target = ${money(savedGoal.target)} (${savedGoal.presetLabel})`;
+    }
+
+    function setPreset(preset) {
+      const map = {
+        best: { riskPercent: 0, extraWeekly: 0 },
+        normal: { riskPercent: 10, extraWeekly: 0 },
+        worst: { riskPercent: 25, extraWeekly: 100 }
+      };
+      const selected = map[preset] || map.normal;
+      riskPercentInput.value = String(selected.riskPercent);
+      extraWeeklyInput.value = String(selected.extraWeekly);
+
+      Array.from(presetGroup.querySelectorAll('[data-preset]')).forEach((btn) => {
+        btn.classList.toggle('active', btn.getAttribute('data-preset') === preset);
+      });
+    }
+
+    function activePresetLabel() {
+      const active = presetGroup.querySelector('[data-preset].active');
+      if (!active) {
+        return 'Custom';
+      }
+      const value = active.getAttribute('data-preset');
+      if (value === 'best') return 'Best Case';
+      if (value === 'worst') return 'Worst Case';
+      return 'Normal';
+    }
+
+    function recalc() {
+      const state = {
+        startBalance: Number(startBalanceInput.value || 0),
+        weeklyAllowance: Math.max(0, Number(weeklyAllowanceInput.value || 0)),
+        weeklyExpenses: Math.max(0, Number(weeklyExpensesInput.value || 0)),
+        weeks: Math.max(1, Math.floor(Number(weeksInput.value || 1))),
+        riskPercent: Math.max(0, Number(riskPercentInput.value || 0)),
+        extraWeekly: Math.max(0, Number(extraWeeklyInput.value || 0))
+      };
+
+      setWeeklyForecastState(state);
+
+      const totalInflow = state.weeklyAllowance * state.weeks;
+      const plannedOutflow = state.weeklyExpenses * state.weeks;
+      const riskOutflow = ((state.weeklyExpenses * state.riskPercent) / 100 + state.extraWeekly) * state.weeks;
+
+      const projected = state.startBalance + totalInflow - plannedOutflow;
+      const conservative = state.startBalance + totalInflow - plannedOutflow - riskOutflow;
+      const weeklySafe = state.weeklyAllowance - state.weeklyExpenses - ((state.weeklyExpenses * state.riskPercent) / 100 + state.extraWeekly);
+
+      inflowEl.textContent = money(totalInflow);
+      plannedOutflowEl.textContent = money(plannedOutflow);
+      riskOutflowEl.textContent = money(riskOutflow);
+      projectedEl.textContent = money(projected);
+      conservativeEl.textContent = money(conservative);
+      weeklySafeEl.textContent = money(weeklySafe);
+
+      projectedEl.classList.toggle('negative', projected < 0);
+      projectedEl.classList.toggle('positive', projected >= 0);
+      conservativeEl.classList.toggle('negative', conservative < 0);
+      conservativeEl.classList.toggle('positive', conservative >= 0);
+      weeklySafeEl.classList.toggle('negative', weeklySafe < 0);
+      weeklySafeEl.classList.toggle('positive', weeklySafe >= 0);
+    }
+
+    [
+      startBalanceInput,
+      weeklyAllowanceInput,
+      weeklyExpensesInput,
+      weeksInput,
+      riskPercentInput,
+      extraWeeklyInput
+    ].forEach((input) => {
+      input.addEventListener('input', recalc);
+    });
+
+    useCurrentBtn.addEventListener('click', function () {
+      startBalanceInput.value = String(accountTotal);
+      recalc();
+    });
+
+    presetGroup.addEventListener('click', function (event) {
+      const btn = event.target.closest('[data-preset]');
+      if (!btn) {
+        return;
+      }
+      setPreset(btn.getAttribute('data-preset'));
+      recalc();
+    });
+
+    saveGoalBtn.addEventListener('click', function () {
+      const state = {
+        startBalance: Number(startBalanceInput.value || 0),
+        weeklyAllowance: Math.max(0, Number(weeklyAllowanceInput.value || 0)),
+        weeklyExpenses: Math.max(0, Number(weeklyExpensesInput.value || 0)),
+        weeks: Math.max(1, Math.floor(Number(weeksInput.value || 1))),
+        riskPercent: Math.max(0, Number(riskPercentInput.value || 0)),
+        extraWeekly: Math.max(0, Number(extraWeeklyInput.value || 0))
+      };
+      const totalInflow = state.weeklyAllowance * state.weeks;
+      const plannedOutflow = state.weeklyExpenses * state.weeks;
+      const riskOutflow = ((state.weeklyExpenses * state.riskPercent) / 100 + state.extraWeekly) * state.weeks;
+      const conservative = state.startBalance + totalInflow - plannedOutflow - riskOutflow;
+
+      const savedAt = new Date().toLocaleDateString('en-PH', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+
+      const goal = {
+        target: conservative,
+        weeks: state.weeks,
+        presetLabel: activePresetLabel(),
+        savedAt
+      };
+
+      setWeeklyForecastGoal(goal);
+      goalText.textContent = `${goal.savedAt}: ${goal.weeks} weeks target = ${money(goal.target)} (${goal.presetLabel})`;
+    });
+
+    recalc();
+  }
+
+  function initMonthlyOverviewPage() {
+    renderMonthlyOverview();
+    initWeeklyForecast();
+  }
+
   function renderHistory() {
     const list = document.getElementById('historyList');
     if (!list) {
@@ -1387,7 +1710,7 @@
       initAllTransactionsPage();
     }
     if (page === 'monthly-overview.html') {
-      renderMonthlyOverview();
+      initMonthlyOverviewPage();
     }
     if (page === 'history.html') {
       renderHistory();

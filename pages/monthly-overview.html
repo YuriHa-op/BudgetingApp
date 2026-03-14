@@ -49,6 +49,82 @@
                 </article>
             </div>
         </section>
+
+        <section class="tab-card forecast-card">
+            <div class="tab-head">
+                <h2>Weekly Allowance Forecast</h2>
+                <div class="forecast-actions">
+                    <button type="button" id="forecastUseCurrentBalance">Use Current Balance</button>
+                    <button type="button" id="forecastSaveGoal">Save As Goal</button>
+                </div>
+            </div>
+            <p class="muted" id="forecastStartDate">Starting today</p>
+
+            <div class="forecast-presets" id="forecastPresetGroup">
+                <button type="button" class="pill-btn" data-preset="best">Best Case</button>
+                <button type="button" class="pill-btn active" data-preset="normal">Normal</button>
+                <button type="button" class="pill-btn" data-preset="worst">Worst Case</button>
+            </div>
+
+            <div class="forecast-grid">
+                <label class="forecast-field">
+                    <span>Starting Balance</span>
+                    <input type="number" step="0.01" id="forecastStartBalance" placeholder="0.00">
+                </label>
+                <label class="forecast-field">
+                    <span>Weekly Allowance</span>
+                    <input type="number" step="0.01" id="forecastWeeklyAllowance" placeholder="1000">
+                </label>
+                <label class="forecast-field">
+                    <span>Weekly Expenses (Fare + Food + Others)</span>
+                    <input type="number" step="0.01" id="forecastWeeklyExpenses" placeholder="144">
+                </label>
+                <label class="forecast-field">
+                    <span>Weeks to Project</span>
+                    <input type="number" min="1" step="1" id="forecastWeeks" placeholder="10">
+                </label>
+                <label class="forecast-field">
+                    <span>Unforeseen Risk (%)</span>
+                    <input type="number" min="0" step="0.1" id="forecastRiskPercent" placeholder="10">
+                </label>
+                <label class="forecast-field">
+                    <span>Extra Unexpected / Week</span>
+                    <input type="number" min="0" step="0.01" id="forecastExtraWeekly" placeholder="0">
+                </label>
+            </div>
+
+            <div class="overview-grid forecast-results">
+                <article>
+                    <h2>Total Allowance Inflow</h2>
+                    <p id="forecastInflowTotal">₱0.00</p>
+                </article>
+                <article>
+                    <h2>Total Planned Outflow</h2>
+                    <p id="forecastPlannedOutflow">₱0.00</p>
+                </article>
+                <article>
+                    <h2>Total Risk Buffer</h2>
+                    <p id="forecastRiskOutflow">₱0.00</p>
+                </article>
+                <article>
+                    <h2>Projected Balance</h2>
+                    <p id="forecastProjected">₱0.00</p>
+                </article>
+                <article>
+                    <h2>Conservative Balance</h2>
+                    <p id="forecastConservative">₱0.00</p>
+                </article>
+                <article>
+                    <h2>Safe Weekly Net</h2>
+                    <p id="forecastWeeklySafe">₱0.00</p>
+                </article>
+            </div>
+
+            <div class="forecast-goal" id="forecastGoalCard">
+                <h3>Saved Goal</h3>
+                <p id="forecastGoalText">No saved goal yet.</p>
+            </div>
+        </section>
     </main>
 
     <script src="../assets/js/menu.js"></script>
