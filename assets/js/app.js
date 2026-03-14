@@ -1512,7 +1512,7 @@
         return `
           <div class="account-row" data-account-id="${account.id}" title="Click to manage account">
             <p class="account-name"><span class="account-icon">${escapeHtml(initials(account.name))}</span>${escapeHtml(account.name)}</p>
-            <p class="account-value section-total">${escapeHtml(money(account.balance))}</p>
+            <p class="account-value positive">${escapeHtml(money(account.balance))}</p>
           </div>
         `;
       }).join('');
@@ -1524,7 +1524,7 @@
       oweContainer.innerHTML = peopleOweRows.map((row) => {
         const isPaid = Number(row.amount) <= 0;
         const valText = isPaid ? 'PAID' : money(row.amount);
-        const valClass = isPaid ? 'paid' : 'section-total';
+        const valClass = isPaid ? 'paid' : 'positive';
         return `
           <div class="owe-row" data-list-type="owe" data-people-id="${row.id}" title="Click to manage entry">
             <p class="owe-name"><span class="account-icon">${escapeHtml(initials(row.name))}</span>${escapeHtml(row.name)}</p>

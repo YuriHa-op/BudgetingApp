@@ -73,16 +73,12 @@
     margin-right: 0.5rem;
     font-weight: 900;
     font-size: 0.95rem;
-    color: #8b6b00; /* Fallback gold */
+    color: #8b6b00; /* Gold */
 }
 
-#accountsTotalValue,
-#peopleOweTotalValue {
-    color: #168f61 !important; /* Green */
-}
-
-#peopleIOweTotalValue {
-    color: #b13a5a !important; /* Red */
+.account-value,
+.owe-value {
+    font-weight: 900;
 }
 
 .pill {
