@@ -1,6 +1,6 @@
 .home-layout {
     display: grid;
-    grid-template-columns: minmax(600px, 2fr) minmax(0, 1fr);
+    grid-template-columns: minmax(450px, 1.3fr) minmax(0, 1.7fr);
     gap: 1.2rem;
     align-items: start;
 }
