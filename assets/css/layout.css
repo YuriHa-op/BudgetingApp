@@ -6,25 +6,21 @@
 
 html,
 body {
-    min-height: 100%;
-    height: 100%;
+    width: 100%;
+    min-height: 100vh;
 }
 
 html {
     background: radial-gradient(circle at 20% -10%, rgba(255, 255, 255, 0.42), transparent 48%),
                 radial-gradient(circle at 80% 120%, rgba(255, 255, 255, 0.38), transparent 46%),
-                linear-gradient(145deg, var(--bg-a), var(--bg-b) 52%, var(--bg-c));
+                url('../images/background.jpg') center/cover no-repeat fixed;
+    min-height: 100vh;
 }
 
 body {
     font-family: var(--font-body);
     color: var(--ink-900);
     min-height: 100vh;
-    background: radial-gradient(circle at 20% -10%, rgba(255, 255, 255, 0.42), transparent 48%),
-                radial-gradient(circle at 80% 120%, rgba(255, 255, 255, 0.38), transparent 46%),
-                linear-gradient(145deg, var(--bg-a), var(--bg-b) 52%, var(--bg-c));
-    background-repeat: no-repeat;
-    background-size: cover;
 }
 
 a {
