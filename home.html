@@ -6,7 +6,7 @@
     <title>BADGETwise | Home</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css">
     <link rel="stylesheet" href="assets/css/variables.css">
     <link rel="stylesheet" href="assets/css/layout.css">
@@ -43,6 +43,32 @@
                             <span class="goal-progress-fill" id="goalProgressFill"></span>
                         </div>
                         <p class="goal-progress-meta" id="goalProgressMeta">Save a goal in Monthly Overview to track it here.</p>
+                    </div>
+
+                    <div class="calculator-shell">
+                        <div class="section-head">
+                            <h2 class="section-title">Quick Calculator</h2>
+                            <button class="pill pill-btn" id="calcClearBtn" type="button">C</button>
+                        </div>
+                        <div class="calculator-display" id="calcDisplay">0</div>
+                        <div class="calculator-grid">
+                            <button class="calc-btn" data-value="7">7</button>
+                            <button class="calc-btn" data-value="8">8</button>
+                            <button class="calc-btn" data-value="9">9</button>
+                            <button class="calc-btn calc-op" data-op="/">÷</button>
+                            <button class="calc-btn" data-value="4">4</button>
+                            <button class="calc-btn" data-value="5">5</button>
+                            <button class="calc-btn" data-value="6">6</button>
+                            <button class="calc-btn calc-op" data-op="*">×</button>
+                            <button class="calc-btn" data-value="1">1</button>
+                            <button class="calc-btn" data-value="2">2</button>
+                            <button class="calc-btn" data-value="3">3</button>
+                            <button class="calc-btn calc-op" data-op="-">−</button>
+                            <button class="calc-btn calc-zero" data-value="0">0</button>
+                            <button class="calc-btn" data-value=".">.</button>
+                            <button class="calc-btn calc-op" data-op="+">+</button>
+                            <button class="calc-btn calc-equals" id="calcEqualsBtn">=</button>
+                        </div>
                     </div>
                 </article>
             </div>

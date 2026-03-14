@@ -8,12 +8,11 @@
 }
 
 .tab-card {
-    border: 1px solid rgba(255, 255, 255, 0.48);
-    background: rgba(255, 255, 255, 0.24);
+    border: 1px solid var(--line);
+    background: var(--panel);
     border-radius: var(--radius-lg);
     padding: 1.2rem;
     box-shadow: var(--shadow-md);
-    backdrop-filter: blur(8px);
 }
 
 .tab-head {
@@ -21,24 +20,37 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.6rem;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 0.5rem;
 }
 
 .pill-btn {
-    border: 1px solid rgba(77, 61, 140, 0.24);
-    background: rgba(255, 255, 255, 0.92);
-    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--white);
+    border-radius: var(--radius-sm);
     padding: 0.45rem 0.9rem;
-    font-weight: 800;
-    color: #3e376f;
+    font-weight: 600;
+    color: var(--ink-700);
     cursor: pointer;
     line-height: 1;
+    font-family: var(--font-body);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.2s ease;
+}
+
+.pill-btn:hover {
+    background: var(--bg-a);
+    color: var(--white);
+    border-color: var(--bg-a);
 }
 
 .pill-btn.active {
-    background: #2f2b67;
-    color: #fff;
-    border-color: #2f2b67;
+    background: var(--bg-a);
+    color: var(--white);
+    border-color: var(--bg-a);
+    box-shadow: var(--shadow-sm);
 }
 
 .txn-page-card {
@@ -57,19 +69,20 @@
 .txn-search-wrap {
     display: flex;
     align-items: center;
-    border-radius: 14px;
-    border: 1px solid rgba(73, 57, 132, 0.22);
-    background: rgba(255, 255, 255, 0.9);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--line);
+    background: var(--white);
     padding: 0.55rem 0.75rem;
     min-width: 290px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .txn-avatar-art {
     width: 72px;
     height: 72px;
-    border-radius: 12px;
-    border: 1px solid rgba(75, 57, 134, 0.25);
-    box-shadow: 0 10px 18px rgba(63, 45, 128, 0.25);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-sm);
     flex-shrink: 0;
     object-fit: cover;
     display: block;
@@ -80,32 +93,34 @@
     outline: none;
     width: 100%;
     background: transparent;
-    color: #3d386d;
-    font-weight: 700;
+    color: var(--ink-900);
+    font-weight: 600;
     min-width: 220px;
+    font-family: var(--font-body);
 }
 
 .txn-toggle-pair {
     display: inline-flex;
     gap: 0.2rem;
     align-items: center;
-    padding: 0.18rem;
-    border-radius: 999px;
-    border: 1px solid rgba(76, 59, 138, 0.24);
-    background: rgba(255, 255, 255, 0.78);
+    padding: 0.2rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--line);
+    background: var(--white);
 }
 
 .txn-toggle-pair .pill-btn {
     border: 0;
     background: transparent;
-    color: #3f3972;
+    color: var(--ink-500);
     min-width: 84px;
 }
 
 .txn-toggle-pair .pill-btn.active {
-    border: 1px solid #2f2b67;
-    background: #2f2b67;
-    color: #fff;
+    background: var(--bg-a);
+    color: var(--white);
+    box-shadow: var(--shadow-sm);
+}
 }
 
 .txn-select {
@@ -135,9 +150,9 @@
 
 .txn-list-wrap {
     border-radius: var(--radius-md);
-    border: 1px solid rgba(86, 67, 150, 0.2);
-    background: rgba(255, 255, 255, 0.82);
-    padding: 0.35rem;
+    border: 1px solid var(--line);
+    background: var(--panel-soft);
+    padding: 0.5rem;
 }
 
 .txn-list-item {
@@ -145,15 +160,24 @@
     grid-template-columns: 90px 1.2fr 1fr 120px 1fr;
     gap: 0.5rem;
     align-items: center;
-    border-radius: 10px;
-    border: 1px solid rgba(74, 57, 138, 0.16);
-    background: rgba(255, 255, 255, 0.95);
-    padding: 0.78rem 0.85rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--line);
+    background: var(--white);
+    padding: 0.8rem 1rem;
     margin-bottom: 0.5rem;
     min-height: 72px;
-    font-weight: 700;
-    color: #403d73;
-    font-size: 0.98rem;
+    font-weight: 600;
+    color: var(--ink-700);
+    font-size: 1rem;
+    font-family: var(--font-body);
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.txn-list-item:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+    border-color: var(--bg-a);
 }
 
 .txn-list-item:last-child {
@@ -162,23 +186,36 @@
 
 .tab-head h1 {
     font-family: var(--font-display);
-    font-size: 2rem;
-    color: #29295f;
+    font-size: 2.2rem;
+    color: var(--bg-a);
+    letter-spacing: -0.02em;
 }
 
 .tab-head button {
-    border: 1px solid rgba(69, 54, 134, 0.2);
-    background: #fff;
-    border-radius: 999px;
-    padding: 0.45rem 1rem;
-    font-weight: 800;
-    color: #332f6e;
+    border: 1px solid var(--line);
+    background: var(--white);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 1.2rem;
+    font-weight: 600;
+    color: var(--ink-700);
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-head button:hover {
+    background: var(--bg-a);
+    color: var(--white);
+    border-color: var(--bg-a);
 }
 
 .muted {
-    color: #504d7f;
-    font-weight: 700;
+    color: var(--ink-500);
+    font-weight: 500;
     margin-bottom: 1rem;
+    font-style: italic;
 }
 
 .table-wrap {

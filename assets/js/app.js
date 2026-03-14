@@ -516,7 +516,8 @@
     const labels = entries.map(([name]) => name);
     const values = entries.map(([, value]) => value);
     const total = values.reduce((sum, n) => sum + n, 0);
-    const palette = ['#6e7ff0', '#f08ca0', '#7bc6ff', '#f5ba65', '#8ad17f', '#bb96f4', '#64d8c0', '#f391d4'];
+    // Old Money Palette: Deep Green, Gold, Hunter, Sage, Burgundy, Muted Gold, Creamy Green, Dark
+    const palette = ['#1A3C34', '#D4AF37', '#0F2A22', '#5C7A6D', '#8A2C2C', '#F5BA65', '#2E5942', '#0d1f1a'];
 
     legend.innerHTML = entries.length === 0
       ? '<li><span class="left">No data</span><span>0%</span></li>'
@@ -611,8 +612,8 @@
           {
             label: 'Actual',
             data: actualSeries,
-            borderColor: '#f08ca0',
-            backgroundColor: 'rgba(240, 140, 160, 0.15)',
+            borderColor: '#1A3C34', // Deep Green
+            backgroundColor: 'rgba(26, 60, 52, 0.15)',
             borderWidth: 2,
             pointRadius: 0,
             tension: 0.25
@@ -620,7 +621,7 @@
           {
             label: 'Budget Pace',
             data: budgetSeries,
-            borderColor: '#6e7ff0',
+            borderColor: '#D4AF37', // Gold
             borderDash: [5, 4],
             borderWidth: 2,
             pointRadius: 0,
@@ -636,8 +637,8 @@
             position: 'top',
             labels: {
               boxWidth: 12,
-              color: '#4c487d',
-              font: { size: 13 }
+              color: '#1A3C34',
+              font: { size: 13, family: 'Lato' }
             }
           },
           tooltip: {
@@ -2248,6 +2249,120 @@
       if (event.target === peopleModal) {
         closePeopleModal();
       }
+    });
+
+    attachCalculator();
+  }
+
+  function attachCalculator() {
+    const display = document.getElementById('calcDisplay');
+    const clearBtn = document.getElementById('calcClearBtn');
+    const equalsBtn = document.getElementById('calcEqualsBtn');
+    const numBtns = document.querySelectorAll('.calc-btn[data-value]');
+    const opBtns = document.querySelectorAll('.calc-btn[data-op]');
+
+    if (!display || !clearBtn || numBtns.length === 0) {
+      return;
+    }
+
+    let calcValue = '0';
+    let calcOperator = null;
+    let calcPrevValue = null;
+    let calcShouldClearDisplay = false;
+
+    function updateDisplay() {
+      display.textContent = calcValue || '0';
+    }
+
+    numBtns.forEach((btn) => {
+      btn.addEventListener('click', function () {
+        const val = btn.getAttribute('data-value');
+        if (val === '.') {
+          if (!calcValue.includes('.')) {
+            calcValue += '.';
+          }
+        } else {
+          if (calcShouldClearDisplay) {
+            calcValue = val;
+            calcShouldClearDisplay = false;
+          } else {
+            calcValue = (calcValue === '0' && val !== '.') ? val : calcValue + val;
+          }
+        }
+        updateDisplay();
+      });
+    });
+
+    opBtns.forEach((btn) => {
+      btn.addEventListener('click', function () {
+        const op = btn.getAttribute('data-op');
+        const currentValue = Number(calcValue) || 0;
+
+        if (calcOperator !== null && !calcShouldClearDisplay) {
+          const prev = Number(calcPrevValue) || 0;
+          let result = 0;
+          switch (calcOperator) {
+            case '+':
+              result = prev + currentValue;
+              break;
+            case '-':
+              result = prev - currentValue;
+              break;
+            case '*':
+              result = prev * currentValue;
+              break;
+            case '/':
+              result = currentValue !== 0 ? prev / currentValue : 0;
+              break;
+          }
+          calcValue = String(result);
+        } else {
+          calcPrevValue = calcValue;
+        }
+
+        calcOperator = op;
+        calcShouldClearDisplay = true;
+        updateDisplay();
+      });
+    });
+
+    equalsBtn.addEventListener('click', function () {
+      if (calcOperator === null) {
+        return;
+      }
+
+      const curr = Number(calcValue) || 0;
+      const prev = Number(calcPrevValue) || 0;
+      let result = 0;
+
+      switch (calcOperator) {
+        case '+':
+          result = prev + curr;
+          break;
+        case '-':
+          result = prev - curr;
+          break;
+        case '*':
+          result = prev * curr;
+          break;
+        case '/':
+          result = curr !== 0 ? prev / curr : 0;
+          break;
+      }
+
+      calcValue = String(result);
+      calcOperator = null;
+      calcPrevValue = null;
+      calcShouldClearDisplay = true;
+      updateDisplay();
+    });
+
+    clearBtn.addEventListener('click', function () {
+      calcValue = '0';
+      calcOperator = null;
+      calcPrevValue = null;
+      calcShouldClearDisplay = false;
+      updateDisplay();
     });
   }
 

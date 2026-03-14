@@ -214,12 +214,14 @@ CREATE INDEX IF NOT EXISTS idx_transactions_category_id ON transactions(category
     }
 
     createUser({ username, full_name, mobile, email, password_hash, allowance_day = 1 }) {
-      this.execute(
-        `INSERT INTO users (username, full_name, mobile, email, password_hash, allowance_day)
-         VALUES (?, ?, ?, ?, ?, ?);`,
-        [username, full_name, mobile || null, email, password_hash, allowance_day]
-      );
-      return this.queryValue('SELECT * FROM users WHERE id = last_insert_rowid();');
+      return this.withTransaction(() => {
+        this.db.run(
+          `INSERT INTO users (username, full_name, mobile, email, password_hash, allowance_day)
+           VALUES (?, ?, ?, ?, ?, ?);`,
+          [username, full_name, mobile || null, email, password_hash, allowance_day]
+        );
+        return this.queryValue('SELECT * FROM users WHERE id = last_insert_rowid();');
+      });
     }
 
     getUserByIdentity(identity) {
@@ -251,12 +253,14 @@ CREATE INDEX IF NOT EXISTS idx_transactions_category_id ON transactions(category
     }
 
     createAccount({ user_id, name, type = 'bank', balance = 0 }) {
-      this.execute(
-        `INSERT INTO accounts (user_id, name, type, balance)
-         VALUES (?, ?, ?, ?);`,
-        [user_id, name, type, Number(balance) || 0]
-      );
-      return this.queryValue('SELECT * FROM accounts WHERE id = last_insert_rowid();');
+      return this.withTransaction(() => {
+        this.db.run(
+          `INSERT INTO accounts (user_id, name, type, balance)
+           VALUES (?, ?, ?, ?);`,
+          [user_id, name, type, Number(balance) || 0]
+        );
+        return this.queryValue('SELECT * FROM accounts WHERE id = last_insert_rowid();');
+      });
     }
 
     updateAccount(id, fields) {
@@ -295,12 +299,14 @@ CREATE INDEX IF NOT EXISTS idx_transactions_category_id ON transactions(category
     }
 
     createCategory({ name, type, icon = 'tag', color = '#6B7280' }) {
-      this.execute(
-        `INSERT INTO categories (name, type, icon, color)
-         VALUES (?, ?, ?, ?);`,
-        [name, type, icon, color]
-      );
-      return this.queryValue('SELECT * FROM categories WHERE id = last_insert_rowid();');
+      return this.withTransaction(() => {
+        this.db.run(
+          `INSERT INTO categories (name, type, icon, color)
+           VALUES (?, ?, ?, ?);`,
+          [name, type, icon, color]
+        );
+        return this.queryValue('SELECT * FROM categories WHERE id = last_insert_rowid();');
+      });
     }
 
     listTransactions(userId, filters = {}) {
