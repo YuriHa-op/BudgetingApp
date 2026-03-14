@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BudgetWise | Monthly Overview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/variables.css">
+    <link rel="stylesheet" href="../assets/css/layout.css">
+    <link rel="stylesheet" href="../assets/css/tab-page.css">
+</head>
+<body>
+    <header class="top-nav">
+        <a class="brand" href="../home.html">BudgetWise</a>
+        <nav class="tab-nav" id="tabNav">
+            <a href="../home.html">Home</a>
+            <a href="all-transactions.html">All Transactions</a>
+            <a href="monthly-overview.html" class="active">Monthly Overview</a>
+            <a href="history.html">History</a>
+        </nav>
+        <div class="nav-meta">Account</div>
+    </header>
+
+    <main class="page-shell">
+        <section class="tab-card">
+            <div class="tab-head">
+                <h1>Monthly Overview</h1>
+                <button type="button">Export</button>
+            </div>
+            <p class="muted">This page is separated from Home so monthly charts and projections can be managed independently.</p>
+            <div class="overview-grid">
+                <article>
+                    <h2>Income</h2>
+                    <p class="positive" id="monthlyIncome">$0.00</p>
+                </article>
+                <article>
+                    <h2>Expenses</h2>
+                    <p class="negative" id="monthlyExpenses">$0.00</p>
+                </article>
+                <article>
+                    <h2>Savings Rate</h2>
+                    <p id="monthlySavingsRate">0%</p>
+                </article>
+                <article>
+                    <h2>Top Category</h2>
+                    <p id="monthlyTopCategory">No data yet</p>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <script src="../assets/js/menu.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    <script src="../db.js"></script>
+    <script src="../assets/js/app.js"></script>
+</body>
+</html>

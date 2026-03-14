@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BudgetWise | All Transactions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/variables.css">
+    <link rel="stylesheet" href="../assets/css/layout.css">
+    <link rel="stylesheet" href="../assets/css/tab-page.css">
+</head>
+<body>
+    <header class="top-nav">
+        <a class="brand" href="../home.html">BudgetWise</a>
+        <nav class="tab-nav" id="tabNav">
+            <a href="../home.html">Home</a>
+            <a href="all-transactions.html" class="active">All Transactions</a>
+            <a href="monthly-overview.html">Monthly Overview</a>
+            <a href="history.html">History</a>
+        </nav>
+        <div class="nav-meta">Account</div>
+    </header>
+
+    <main class="page-shell">
+        <section class="tab-card txn-page-card">
+            <div class="txn-toolbar">
+                <img class="txn-avatar-art" src="../assets/gifs/alltransactions.gif" alt="All transactions animation">
+
+                <div class="txn-search-wrap">
+                    <input type="search" id="allTxSearch" placeholder="Search transactions...">
+                </div>
+
+                <select id="allTxMonth" class="txn-select">
+                    <option value="this_year">This year</option>
+                    <option value="all">All Months</option>
+                </select>
+
+                <div class="txn-toggle-pair">
+                    <button type="button" class="pill-btn active" id="showFutureBtn">Show Future</button>
+                    <button type="button" class="pill-btn" id="hideFutureBtn">Hide Future</button>
+                </div>
+            </div>
+
+            <div class="txn-filter-row">
+                <div class="txn-toggle-pair" id="allTxTypeGroup">
+                    <button type="button" class="pill-btn active" data-type="all">All</button>
+                    <button type="button" class="pill-btn" data-type="expense">Expense</button>
+                    <button type="button" class="pill-btn" data-type="income">Income</button>
+                </div>
+
+                <select id="allTxCategory" class="txn-select">
+                    <option value="all">All categories</option>
+                </select>
+
+                <div class="txn-toggle-pair" id="allTxViewGroup">
+                    <button type="button" class="pill-btn" data-view="list">List</button>
+                    <button type="button" class="pill-btn active" data-view="table">Table</button>
+                </div>
+
+                <button type="button" id="allTxNewBtn" class="pill-btn txn-new-btn">NEW +</button>
+            </div>
+
+            <div class="txn-results-meta">
+                <span id="allTxCount">0 results</span>
+            </div>
+
+            <div class="table-wrap" id="allTxTableWrap">
+                <table class="txn-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Item Name</th>
+                            <th>Merchant</th>
+                            <th class="align-right">Amount</th>
+                            <th>Category</th>
+                        </tr>
+                    </thead>
+                    <tbody id="allTransactionsBody"></tbody>
+                </table>
+            </div>
+
+            <div class="txn-list-wrap hidden" id="allTxListWrap">
+                <div id="allTransactionsList"></div>
+            </div>
+        </section>
+    </main>
+
+    <script src="../assets/js/menu.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    <script src="../db.js"></script>
+    <script src="../assets/js/app.js"></script>
+</body>
+</html>

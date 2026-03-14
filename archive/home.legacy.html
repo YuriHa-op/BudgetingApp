@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BudgetWise — Personal Budget Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+/* ====================== RESET & VARIABLES ====================== */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+    --primary: #4F46E5; --primary-light: #818CF8; --primary-dark: #3730A3;
+    --primary-bg: rgba(79,70,229,0.08);
+    --success: #10B981; --success-light: #D1FAE5;
+    --danger: #EF4444; --danger-light: #FEE2E2;
+    --warning: #F59E0B; --warning-light: #FEF3C7;
+    --bg: #F0F2F5; --card: #FFFFFF;
+    --text: #1F2937; --text2: #6B7280; --text3: #9CA3AF;
+    --border: #E5E7EB; --border2: #D1D5DB;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -1px rgba(0,0,0,0.04);
+    --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+    --radius: 12px; --radius-sm: 8px; --radius-xs: 6px;
+    --sidebar-w: 260px; --navbar-h: 64px;
+    --transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+html { scroll-behavior: smooth; }
+body {
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    background: var(--bg); color: var(--text);
+    line-height: 1.6; font-size: 14px; overflow-x: hidden;
+}
+a { text-decoration: none; color: inherit; }
+button { cursor: pointer; font-family: inherit; border: none; background: none; font-size: inherit; }
+input, select, textarea { font-family: inherit; font-size: inherit; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ====================== LOADING SCREEN ====================== */
+#loadingScreen {
+    position: fixed; inset: 0; z-index: 9999;
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary), var(--primary-light));
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: #fff; gap: 20px;
+}
+.loader-title { font-size: 32px; font-weight: 800; letter-spacing: -1px; }
+.loader-spinner {
+    width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3);
+    border-top-color: #fff; border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ====================== AUTH SCREEN ====================== */
+#authScreen {
+    display: none; position: fixed; inset: 0; z-index: 1000;
+    background: linear-gradient(135deg, #1e1b4b 0%, #3730a3 40%, #6366f1 100%);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+}
+.auth-container {
+    background: var(--card); border-radius: 20px; padding: 0;
+    width: 100%; max-width: 440px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.3); overflow: hidden;
+}
+.auth-header {
+    text-align: center; padding: 32px 32px 0;
+}
+.auth-header .logo { font-size: 28px; font-weight: 800; color: var(--primary); letter-spacing: -1px; }
+.auth-header .logo span { color: var(--success); }
+.auth-header p { color: var(--text2); margin-top: 4px; font-size: 13px; }
+.auth-tabs {
+    display: flex; margin: 24px 32px 0; background: var(--bg);
+    border-radius: var(--radius-sm); padding: 4px; gap: 4px;
+}
+.auth-tab {
+    flex: 1; padding: 10px; border-radius: var(--radius-xs);
+    font-weight: 600; font-size: 13px; color: var(--text2);
+    transition: var(--transition); text-align: center;
+}
+.auth-tab.active { background: var(--card); color: var(--primary); box-shadow: var(--shadow); }
+.auth-form { padding: 24px 32px 32px; }
+.auth-form.hidden { display: none; }
+.form-group { margin-bottom: 16px; }
+.form-group label {
+    display: block; font-size: 12px; font-weight: 600;
+    color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 10px 14px; border: 2px solid var(--border);
+    border-radius: var(--radius-sm); font-size: 14px; color: var(--text);
+    transition: var(--transition); background: var(--card);
+    outline: none;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-bg);
+}
+.form-group input.error { border-color: var(--danger); }
+.form-group .error-msg { color: var(--danger); font-size: 11px; margin-top: 4px; display: none; }
+.form-group .error-msg.show { display: block; }
+.form-row { display: flex; gap: 12px; }
+.form-row .form-group { flex: 1; }
+.btn {
+    padding: 10px 20px; border-radius: var(--radius-sm); font-weight: 600;
+    font-size: 13px; transition: var(--transition); display: inline-flex;
+    align-items: center; justify-content: center; gap: 8px;
+}
+.btn-primary {
+    background: var(--primary); color: #fff; width: 100%; padding: 12px;
+    font-size: 15px; border-radius: var(--radius-sm);
+}
+.btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--border); }
+.btn-success { background: var(--success); color: #fff; }
+.btn-success:hover { background: #059669; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover { background: #DC2626; }
+.btn-ghost { color: var(--text2); padding: 8px; }
+.btn-ghost:hover { background: var(--bg); color: var(--text); border-radius: var(--radius-xs); }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-icon {
+    width: 36px; height: 36px; border-radius: var(--radius-xs);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text2); transition: var(--transition);
+}
+.btn-icon:hover { background: var(--bg); color: var(--text); }
+
+/* ====================== APP LAYOUT ====================== */
+#appScreen { display: none; min-height: 100vh; }
+.navbar {
+    position: fixed; top: 0; left: 0; right: 0; height: var(--navbar-h);
+    background: var(--card); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; z-index: 100; box-shadow: var(--shadow);
+}
+.navbar .logo { font-size: 22px; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
+.navbar .logo span { color: var(--success); }
+.nav-right { display: flex; align-items: center; gap: 16px; }
+.nav-user { display: flex; align-items: center; gap: 10px; }
+.nav-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--primary-bg); color: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px;
+}
+.nav-user-info .nav-name { font-weight: 600; font-size: 13px; line-height: 1.2; }
+.nav-user-info .nav-email { font-size: 11px; color: var(--text3); }
+.btn-logout {
+    padding: 8px 16px; background: var(--danger-light); color: var(--danger);
+    border-radius: var(--radius-xs); font-weight: 600; font-size: 12px;
+}
+.btn-logout:hover { background: var(--danger); color: #fff; }
+.hamburger { display: none; font-size: 22px; padding: 8px; }
+
+/* ====================== SIDEBAR ====================== */
+.sidebar {
+    position: fixed; top: var(--navbar-h); left: 0; bottom: 0;
+    width: var(--sidebar-w); background: var(--card);
+    border-right: 1px solid var(--border); padding: 20px 12px;
+    overflow-y: auto; z-index: 90; transition: var(--transition);
+}
+.sidebar-section { margin-bottom: 24px; }
+.sidebar-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--text3); padding: 0 12px; margin-bottom: 8px;
+}
+.sidebar-link {
+    display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+    border-radius: var(--radius-sm); color: var(--text2);
+    font-weight: 500; font-size: 13px; transition: var(--transition);
+    margin-bottom: 2px;
+}
+.sidebar-link:hover { background: var(--bg); color: var(--text); }
+.sidebar-link.active { background: var(--primary-bg); color: var(--primary); font-weight: 600; }
+.sidebar-link .icon { font-size: 18px; width: 24px; text-align: center; }
+.sidebar-bottom {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 16px; border-top: 1px solid var(--border);
+}
+
+/* ====================== MAIN CONTENT ====================== */
+.main-content {
+    margin-left: var(--sidebar-w); margin-top: var(--navbar-h);
+    padding: 24px; min-height: calc(100vh - var(--navbar-h));
+}
+.page { display: none; }
+.page.active { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.page-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+}
+.page-title { font-size: 24px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+.page-subtitle { font-size: 13px; color: var(--text2); margin-top: 2px; }
+
+/* ====================== DASHBOARD CARDS ====================== */
+.summary-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px; margin-bottom: 24px;
+}
+.summary-card {
+    background: var(--card); border-radius: var(--radius); padding: 20px;
+    box-shadow: var(--shadow); position: relative; overflow: hidden;
+}
+.summary-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+}
+.summary-card.net-worth::before { background: linear-gradient(90deg, var(--primary), var(--primary-light)); }
+.summary-card.allowance::before { background: linear-gradient(90deg, var(--warning), #FBBF24); }
+.summary-card.income-card::before { background: linear-gradient(90deg, var(--success), #34D399); }
+.summary-card.expense-card::before { background: linear-gradient(90deg, var(--danger), #F87171); }
+.summary-card .card-icon {
+    width: 44px; height: 44px; border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; margin-bottom: 12px;
+}
+.summary-card.net-worth .card-icon { background: var(--primary-bg); }
+.summary-card.allowance .card-icon { background: var(--warning-light); }
+.summary-card.income-card .card-icon { background: var(--success-light); }
+.summary-card.expense-card .card-icon { background: var(--danger-light); }
+.card-label { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+.card-value { font-size: 26px; font-weight: 800; margin-top: 4px; letter-spacing: -1px; }
+.card-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+.card-edit-btn {
+    position: absolute; top: 16px; right: 16px;
+    font-size: 14px; color: var(--text3); cursor: pointer;
+    padding: 4px; border-radius: 4px; transition: var(--transition);
+}
+.card-edit-btn:hover { color: var(--primary); background: var(--primary-bg); }
+
+/* ====================== SECTIONS ====================== */
+.section { margin-bottom: 24px; }
+.section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+}
+.section-title { font-size: 16px; font-weight: 700; }
+.section-card {
+    background: var(--card); border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow: hidden;
+}
+
+/* ====================== ACCOUNTS ====================== */
+.accounts-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px; padding: 16px;
+}
+.account-card {
+    border: 2px solid var(--border); border-radius: var(--radius-sm);
+    padding: 16px; position: relative; transition: var(--transition);
+}
+.account-card:hover { border-color: var(--primary-light); box-shadow: var(--shadow-md); }
+.account-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.account-icon { font-size: 28px; }
+.account-actions { display: flex; gap: 4px; opacity: 0; transition: var(--transition); }
+.account-card:hover .account-actions { opacity: 1; }
+.account-name { font-size: 13px; font-weight: 600; color: var(--text2); }
+.account-balance { font-size: 22px; font-weight: 800; margin-top: 4px; letter-spacing: -0.5px; }
+.account-type-badge {
+    display: inline-block; font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; padding: 2px 8px; border-radius: 20px;
+    margin-top: 8px;
+}
+.add-account-card {
+    border: 2px dashed var(--border); border-radius: var(--radius-sm);
+    padding: 16px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 8px;
+    color: var(--text3); cursor: pointer; transition: var(--transition);
+    min-height: 120px;
+}
+.add-account-card:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-bg); }
+.add-account-card .plus { font-size: 28px; font-weight: 300; }
+.add-account-card span { font-size: 12px; font-weight: 600; }
+
+/* ====================== TRANSACTION LIST ====================== */
+.transaction-list { }
+.transaction-item {
+    display: flex; align-items: center; padding: 14px 20px; gap: 14px;
+    border-bottom: 1px solid var(--border); transition: var(--transition);
+}
+.transaction-item:last-child { border-bottom: none; }
+.transaction-item:hover { background: #FAFAFA; }
+.txn-icon {
+    width: 40px; height: 40px; border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+}
+.txn-details { flex: 1; min-width: 0; }
+.txn-title { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.txn-meta { font-size: 11px; color: var(--text3); margin-top: 2px; display: flex; gap: 8px; flex-wrap: wrap; }
+.txn-amount { font-weight: 700; font-size: 14px; text-align: right; white-space: nowrap; }
+.txn-amount.income { color: var(--success); }
+.txn-amount.expense { color: var(--danger); }
+.txn-actions { display: flex; gap: 2px; opacity: 0; transition: var(--transition); flex-shrink: 0; }
+.transaction-item:hover .txn-actions { opacity: 1; }
+.empty-state {
+    text-align: center; padding: 48px 20px; color: var(--text3);
+}
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state h3 { color: var(--text2); font-size: 16px; margin-bottom: 4px; }
+.empty-state p { font-size: 13px; }
+
+/* ====================== FILTER BAR ====================== */
+.filter-bar {
+    display: flex; align-items: center; gap: 12px; padding: 16px 20px;
+    border-bottom: 1px solid var(--border); flex-wrap: wrap;
+}
+.filter-bar select, .filter-bar input {
+    padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-xs);
+    font-size: 13px; color: var(--text); background: var(--card); outline: none;
+}
+.filter-bar select:focus, .filter-bar input:focus { border-color: var(--primary); }
+
+/* ====================== MODALS ====================== */
+.modal-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center;
+    padding: 20px; animation: fadeIn 0.2s ease;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+    background: var(--card); border-radius: 16px; width: 100%;
+    max-width: 500px; max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.2); animation: slideUp 0.3s ease;
+}
+@keyframes slideUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
+.modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px; border-bottom: 1px solid var(--border);
+}
+.modal-title { font-size: 18px; font-weight: 700; }
+.modal-close { font-size: 20px; color: var(--text3); padding: 4px 8px; border-radius: 4px; }
+.modal-close:hover { background: var(--bg); color: var(--text); }
+.modal-body { padding: 24px; }
+.modal-footer {
+    display: flex; justify-content: flex-end; gap: 10px;
+    padding: 16px 24px; border-top: 1px solid var(--border);
+}
+.formula-preview {
+    font-size: 12px; margin-top: 4px; min-height: 18px; font-weight: 600;
+}
+.formula-preview.valid { color: var(--success); }
+.formula-preview.invalid { color: var(--danger); }
+
+/* type toggle */
+.type-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
+.type-toggle-btn {
+    flex: 1; padding: 10px; border: 2px solid var(--border); border-radius: var(--radius-sm);
+    font-weight: 600; font-size: 13px; text-align: center; transition: var(--transition);
+    color: var(--text2);
+}
+.type-toggle-btn.active.expense-type { border-color: var(--danger); background: var(--danger-light); color: var(--danger); }
+.type-toggle-btn.active.income-type { border-color: var(--success); background: var(--success-light); color: var(--success); }
+
+/* ====================== TOAST ====================== */
+#toastContainer {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+    display: flex; flex-direction: column-reverse; gap: 8px;
+}
+.toast {
+    padding: 14px 20px; border-radius: var(--radius-sm); color: #fff;
+    font-size: 13px; font-weight: 500; box-shadow: var(--shadow-lg);
+    display: flex; align-items: center; gap: 10px;
+    animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s;
+    min-width: 280px;
+}
+.toast.success { background: var(--success); }
+.toast.error { background: var(--danger); }
+.toast.warning { background: var(--warning); }
+.toast.info { background: var(--primary); }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes fadeOut { to { opacity: 0; transform: translateX(50px); } }
+
+/* ====================== MONTHLY PLACEHOLDER ====================== */
+.placeholder-page {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 80px 20px; text-align: center;
+}
+.placeholder-page .placeholder-icon { font-size: 64px; margin-bottom: 16px; }
+.placeholder-page h2 { color: var(--text2); margin-bottom: 8px; }
+.placeholder-page p { color: var(--text3); max-width: 400px; }
+
+/* ====================== RESPONSIVE ====================== */
+@media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); box-shadow: var(--shadow-lg); }
+    .main-content { margin-left: 0; }
+    .hamburger { display: block; }
+    .summary-grid { grid-template-columns: 1fr 1fr; }
+    .accounts-grid { grid-template-columns: 1fr; }
+    .form-row { flex-direction: column; gap: 0; }
+    .nav-user-info { display: none; }
+    .transaction-item { flex-wrap: wrap; }
+    .txn-actions { opacity: 1; }
+    .account-actions { opacity: 1; }
+    .filter-bar { flex-direction: column; align-items: stretch; }
+}
+@media (max-width: 480px) {
+    .summary-grid { grid-template-columns: 1fr; }
+    .auth-container { border-radius: 16px; }
+    .auth-form { padding: 20px; }
+    .auth-header { padding: 24px 20px 0; }
+    .auth-tabs { margin: 20px 20px 0; }
+    .card-value { font-size: 22px; }
+}
+    </style>
+</head>
+<body>
+
+<!-- ==================== LOADING SCREEN ==================== -->
+<div id="loadingScreen">
+    <div class="loader-title">Budget<span style="color:#34D399">Wise</span></div>
+    <div class="loader-spinner"></div>
+    <p style="color:rgba(255,255,255,0.7); font-size:13px;">Loading your finances...</p>
+</div>
+
+<!-- ==================== AUTH SCREEN ==================== -->
+<div id="authScreen" style="display:none">
+    <div class="auth-container">
+        <div class="auth-header">
+            <div class="logo">Budget<span>Wise</span></div>
+            <p>Take control of your personal finances</p>
+        </div>
+        <div class="auth-tabs">
+            <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
+            <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <form id="loginForm" class="auth-form" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label>Username or Email</label>
+                <input type="text" id="loginIdentity" placeholder="Enter username or email" required>
+                <div class="error-msg" id="loginIdentityErr"></div>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" placeholder="Enter password" required>
+                <div class="error-msg" id="loginPasswordErr"></div>
+            </div>
+            <button type="submit" class="btn btn-primary">Sign In</button>
+        </form>
+
+        <!-- REGISTER FORM -->
+        <form id="registerForm" class="auth-form hidden" onsubmit="handleRegister(event)">
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="regUsername" placeholder="Choose a username" required>
+                <div class="error-msg" id="regUsernameErr"></div>
+            </div>
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="regFullName" placeholder="Your full name" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Mobile #</label>
+                    <input type="tel" id="regMobile" placeholder="09XX XXX XXXX">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="regEmail" placeholder="you@email.com" required>
+                    <div class="error-msg" id="regEmailErr"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="regPassword" placeholder="Min 6 characters" required>
+                <div class="error-msg" id="regPasswordErr"></div>
+            </div>
+            <div class="form-group">
+                <label>Confirm Password</label>
+                <input type="password" id="regConfirm" placeholder="Re-enter password" required>
+                <div class="error-msg" id="regConfirmErr"></div>
+            </div>
+            <button type="submit" class="btn btn-primary">Create Account</button>
+        </form>
+    </div>
+</div>
+
+<!-- ==================== APP SCREEN ==================== -->
+<div id="appScreen" style="display:none">
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <button class="hamburger" onclick="toggleSidebar()">☰</button>
+            <div class="logo">Budget<span>Wise</span></div>
+        </div>
+        <div class="nav-right">
+            <div class="nav-user">
+                <div class="nav-avatar" id="navAvatar">JD</div>
+                <div class="nav-user-info">
+                    <div class="nav-name" id="navName">John Doe</div>
+                    <div class="nav-email" id="navEmail">john@email.com</div>
+                </div>
+            </div>
+            <button class="btn-logout" onclick="handleLogout()">Logout</button>
+        </div>
+    </nav>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-section">
+            <div class="sidebar-label">Menu</div>
+            <a href="#" class="sidebar-link active" data-page="dashboard" onclick="navigate('dashboard')">
+                <span class="icon">🏠</span> Dashboard
+            </a>
+            <a href="#" class="sidebar-link" data-page="accounts" onclick="navigate('accounts')">
+                <span class="icon">💳</span> Accounts
+            </a>
+            <a href="#" class="sidebar-link" data-page="transactions" onclick="navigate('transactions')">
+                <span class="icon">📋</span> All Transactions
+            </a>
+            <a href="#" class="sidebar-link" data-page="monthly" onclick="navigate('monthly')">
+                <span class="icon">📊</span> Monthly Overview
+            </a>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- ===== DASHBOARD PAGE ===== -->
+        <div id="dashboardPage" class="page active">
+            <div class="page-header">
+                <div>
+                    <div class="page-title">Dashboard</div>
+                    <div class="page-subtitle" id="dashGreeting">Good morning, John</div>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="openTransactionModal()" style="width:auto">
+                    ＋ Add Transaction
+                </button>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="summary-grid">
+                <div class="summary-card net-worth">
+                    <div class="card-icon">💰</div>
+                    <div class="card-label">Net Worth</div>
+                    <div class="card-value" id="netWorthValue">$0.00</div>
+                    <div class="card-sub" id="netWorthSub">Across all accounts</div>
+                </div>
+                <div class="summary-card allowance">
+                    <button class="card-edit-btn" onclick="openAllowanceSettings()" title="Change allowance day">⚙️</button>
+                    <div class="card-icon">📅</div>
+                    <div class="card-label">Next Allowance</div>
+                    <div class="card-value" id="allowanceDays">-- days</div>
+                    <div class="card-sub" id="allowanceSub">on the 1st</div>
+                </div>
+                <div class="summary-card income-card">
+                    <div class="card-icon">📈</div>
+                    <div class="card-label">This Month Income</div>
+                    <div class="card-value" id="monthIncome" style="color:var(--success)">$0.00</div>
+                </div>
+                <div class="summary-card expense-card">
+                    <div class="card-icon">📉</div>
+                    <div class="card-label">This Month Expenses</div>
+                    <div class="card-value" id="monthExpense" style="color:var(--danger)">$0.00</div>
+                </div>
+            </div>
+
+            <!-- Accounts Quick View -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">💳 My Accounts</div>
+                    <button class="btn btn-secondary btn-sm" onclick="openAccountModal()">＋ Add</button>
+                </div>
+                <div class="section-card">
+                    <div class="accounts-grid" id="dashAccountsGrid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">🕐 Recent Transactions</div>
+                    <button class="btn btn-ghost btn-sm" onclick="navigate('transactions')">View All →</button>
+                </div>
+                <div class="section-card">
+                    <div id="recentTransactions">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== ACCOUNTS PAGE ===== -->
+        <div id="accountsPage" class="page">
+            <div class="page-header">
+                <div>
+                    <div class="page-title">Accounts</div>
+                    <div class="page-subtitle">Manage your financial accounts</div>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="openAccountModal()" style="width:auto">
+                    ＋ Add Account
+                </button>
+            </div>
+            <div class="section-card">
+                <div class="accounts-grid" id="accountsPageGrid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== ALL TRANSACTIONS PAGE ===== -->
+        <div id="transactionsPage" class="page">
+            <div class="page-header">
+                <div>
+                    <div class="page-title">All Transactions</div>
+                    <div class="page-subtitle" id="txnCountLabel">0 transactions</div>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="openTransactionModal()" style="width:auto">
+                    ＋ Add Transaction
+                </button>
+            </div>
+            <div class="section-card">
+                <div class="filter-bar">
+                    <select id="filterType" onchange="renderAllTransactions()">
+                        <option value="all">All Types</option>
+                        <option value="income">Income Only</option>
+                        <option value="expense">Expense Only</option>
+                    </select>
+                    <select id="filterCategory" onchange="renderAllTransactions()">
+                        <option value="all">All Categories</option>
+                    </select>
+                    <input type="month" id="filterMonth" onchange="renderAllTransactions()">
+                </div>
+                <div id="allTransactionsList">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== MONTHLY OVERVIEW PAGE (Placeholder) ===== -->
+        <div id="monthlyPage" class="page">
+            <div class="page-header">
+                <div>
+                    <div class="page-title">Monthly Overview</div>
+                    <div class="page-subtitle">Historical budget analysis</div>
+                </div>
+            </div>
+            <div class="placeholder-page">
+                <div class="placeholder-icon">🏗️</div>
+                <h2>Coming Soon</h2>
+                <p>Monthly overview with charts, spending trends, and budget comparisons will be available in a future update.</p>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- ==================== TRANSACTION MODAL ==================== -->
+<div class="modal-overlay" id="transactionModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <div class="modal-title" id="txnModalTitle">Add Transaction</div>
+            <button class="modal-close" onclick="closeModal('transactionModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="txnEditId">
+            <!-- Type Toggle -->
+            <div class="type-toggle">
+                <button type="button" class="type-toggle-btn expense-type active" onclick="setTxnType('expense')">
+                    📉 Expense
+                </button>
+                <button type="button" class="type-toggle-btn income-type" onclick="setTxnType('income')">
+                    📈 Income
+                </button>
+            </div>
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" id="txnTitle" placeholder="e.g. Grocery shopping">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Amount (supports formulas like 100+50)</label>
+                    <input type="text" id="txnAmount" placeholder="e.g. 150 or 100+50" oninput="previewFormula()">
+                    <div class="formula-preview" id="formulaPreview"></div>
+                </div>
+                <div class="form-group">
+                    <label>Account</label>
+                    <select id="txnAccount"></select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="txnCategory"></select>
+                </div>
+                <div class="form-group">
+                    <label>Merchant</label>
+                    <input type="text" id="txnMerchant" placeholder="e.g. Walmart">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" id="txnDate">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('transactionModal')">Cancel</button>
+            <button class="btn btn-success" onclick="saveTransaction()">Save Transaction</button>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== ACCOUNT MODAL ==================== -->
+<div class="modal-overlay" id="accountModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <div class="modal-title" id="accModalTitle">Add Account</div>
+            <button class="modal-close" onclick="closeModal('accountModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="accEditId">
+            <div class="form-group">
+                <label>Account Name</label>
+                <input type="text" id="accName" placeholder="e.g. Main Bank Account">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Account Type</label>
+                    <select id="accType">
+                        <option value="bank">🏦 Bank Account</option>
+                        <option value="cash">💵 Physical Cash</option>
+                        <option value="ewallet">📱 E-Wallet</option>
+                        <option value="credit">💳 Credit Card</option>
+                        <option value="savings">🏧 Savings</option>
+                        <option value="other">📦 Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Balance</label>
+                    <input type="number" id="accBalance" step="0.01" placeholder="0.00">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('accountModal')">Cancel</button>
+            <button class="btn btn-success" onclick="saveAccount()">Save Account</button>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== ALLOWANCE SETTINGS MODAL ==================== -->
+<div class="modal-overlay" id="allowanceModal">
+    <div class="modal-box" style="max-width:360px">
+        <div class="modal-header">
+            <div class="modal-title">Allowance Day</div>
+            <button class="modal-close" onclick="closeModal('allowanceModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Which day of the month do you receive your allowance?</label>
+                <select id="allowanceDayInput">
+                    <script>
+                        // populated in init
+                    </script>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('allowanceModal')">Cancel</button>
+            <button class="btn btn-success" onclick="saveAllowanceDay()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== CONFIRM MODAL ==================== -->
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-box" style="max-width:380px">
+        <div class="modal-header">
+            <div class="modal-title">Confirm</div>
+            <button class="modal-close" onclick="closeModal('confirmModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <p id="confirmMessage" style="text-align:center; font-size:14px; color:var(--text2);">
+                Are you sure?
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('confirmModal')">Cancel</button>
+            <button class="btn btn-danger" id="confirmAction">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== TOAST CONTAINER ==================== -->
+<div id="toastContainer"></div>
+
+
+<script>
+// ================================================================
+//                        BUDGETWISE APP
+// ================================================================
+
+// ====================== GLOBALS ======================
+let db = null;
+let currentUser = null;
+let selectedTxnType = 'expense';
+
+const ACCOUNT_ICONS = {
+    bank: '🏦', cash: '💵', ewallet: '📱',
+    credit: '💳', savings: '🏧', other: '📦'
+};
+const ACCOUNT_COLORS = {
+    bank: '#3B82F6', cash: '#10B981', ewallet: '#8B5CF6',
+    credit: '#F59E0B', savings: '#14B8A6', other: '#6B7280'
+};
+
+// ====================== DATABASE ======================
+async function initDatabase() {
+    const SQL = await initSqlJs({
+        locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
+    });
+
+    // Try loading from localStorage
+    const saved = localStorage.getItem('budgetwise_db');
+    if (saved) {
+        try {
+            const buf = Uint8Array.from(atob(saved), c => c.charCodeAt(0));
+            db = new SQL.Database(buf);
+        } catch(e) {
+            console.warn('Failed to load saved DB, creating new:', e);
+            db = new SQL.Database();
+        }
+    } else {
+        db = new SQL.Database();
+    }
+
+    // Create tables (IF NOT EXISTS)
+    db.run(`
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            full_name TEXT NOT NULL,
+            mobile TEXT,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            allowance_day INTEGER DEFAULT 1,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+    `);
+    db.run(`
+        CREATE TABLE IF NOT EXISTS accounts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            type TEXT NOT NULL DEFAULT 'bank',
+            balance REAL DEFAULT 0,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        );
+    `);
+    db.run(`
+        CREATE TABLE IF NOT EXISTS categories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            type TEXT NOT NULL,
+            icon TEXT DEFAULT '📦',
+            color TEXT DEFAULT '#6B7280'
+        );
+    `);
+    db.run(`
+        CREATE TABLE IF NOT EXISTS transactions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            account_id INTEGER NOT NULL,
+            category_id INTEGER,
+            title TEXT NOT NULL,
+            amount REAL NOT NULL,
+            amount_formula TEXT,
+            merchant TEXT,
+            type TEXT NOT NULL,
+            date TEXT NOT NULL,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            FOREIGN KEY (account_id) REFERENCES accounts(id),
+            FOREIGN KEY (category_id) REFERENCES categories(id)
+        );
+    `);
+
+    // Seed categories if empty
+    const catCount = db.exec("SELECT COUNT(*) FROM categories");
+    if (catCount[0].values[0][0] === 0) {
+        db.run(`INSERT INTO categories (name, type, icon, color) VALUES
+            ('Salary','income','💼','#10B981'),
+            ('Freelance','income','💻','#3B82F6'),
+            ('Business','income','🏢','#8B5CF6'),
+            ('Investment','income','📈','#F59E0B'),
+            ('Allowance','income','💰','#EC4899'),
+            ('Gift','income','🎁','#14B8A6'),
+            ('Other Income','income','📦','#6B7280'),
+            ('Food & Dining','expense','🍔','#EF4444'),
+            ('Groceries','expense','🛒','#84CC16'),
+            ('Transportation','expense','🚗','#F97316'),
+            ('Shopping','expense','🛍️','#EC4899'),
+            ('Entertainment','expense','🎬','#8B5CF6'),
+            ('Bills & Utilities','expense','📱','#3B82F6'),
+            ('Healthcare','expense','🏥','#10B981'),
+            ('Education','expense','📚','#6366F1'),
+            ('Housing','expense','🏠','#14B8A6'),
+            ('Personal Care','expense','💅','#F472B6'),
+            ('Other Expense','expense','📦','#6B7280')
+        `);
+    }
+
+    saveDB();
+}
+
+function saveDB() {
+    try {
+        const data = db.export();
+        const b64 = btoa(String.fromCharCode.apply(null, new Uint8Array(data)));
+        localStorage.setItem('budgetwise_db', b64);
+    } catch(e) {
+        // For large DBs, use chunked approach
+        const data = db.export();
+        const bytes = new Uint8Array(data);
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+        localStorage.setItem('budgetwise_db', btoa(binary));
+    }
+}
+
+function query(sql, params = []) {
+    try {
+        const stmt = db.prepare(sql);
+        stmt.bind(params);
+        const rows = [];
+        while (stmt.step()) rows.push(stmt.getAsObject());
+        stmt.free();
+        return rows;
+    } catch(e) {
+        console.error('Query error:', sql, e);
+        return [];
+    }
+}
+
+function run(sql, params = []) {
+    try {
+        db.run(sql, params);
+        saveDB();
+    } catch(e) {
+        console.error('Run error:', sql, e);
+        throw e;
+    }
+}
+
+// ====================== PASSWORD HASHING ======================
+async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password + 'budgetwise_salt_2024');
+    const hash = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// ====================== AUTH ======================
+function switchAuthTab(tab) {
+    document.querySelectorAll('.auth-tab').forEach((t,i) => {
+        t.classList.toggle('active', (tab==='login' && i===0) || (tab==='register' && i===1));
+    });
+    document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+    document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
+    clearAuthErrors();
+}
+
+function clearAuthErrors() {
+    document.querySelectorAll('.error-msg').forEach(el => { el.textContent=''; el.classList.remove('show'); });
+    document.querySelectorAll('.form-group input').forEach(el => el.classList.remove('error'));
+}
+
+function showFieldError(id, msg) {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = msg; el.classList.add('show'); }
+    // Also mark input
+    const input = el?.previousElementSibling;
+    if (input) input.classList.add('error');
+}
+
+async function handleRegister(e) {
+    e.preventDefault();
+    clearAuthErrors();
+
+    const username = document.getElementById('regUsername').value.trim();
+    const fullName = document.getElementById('regFullName').value.trim();
+    const mobile   = document.getElementById('regMobile').value.trim();
+    const email    = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value;
+    const confirm  = document.getElementById('regConfirm').value;
+
+    // Validation
+    let valid = true;
+    if (username.length < 3) { showFieldError('regUsernameErr','Min 3 characters'); valid=false; }
+    if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) { showFieldError('regEmailErr','Invalid email'); valid=false; }
+    if (password.length < 6) { showFieldError('regPasswordErr','Min 6 characters'); valid=false; }
+    if (password !== confirm) { showFieldError('regConfirmErr','Passwords do not match'); valid=false; }
+    if (!valid) return;
+
+    // Check uniqueness
+    const existUser = query("SELECT id FROM users WHERE username = ?", [username]);
+    if (existUser.length) { showFieldError('regUsernameErr','Username already taken'); return; }
+    const existEmail = query("SELECT id FROM users WHERE email = ?", [email]);
+    if (existEmail.length) { showFieldError('regEmailErr','Email already registered'); return; }
+
+    const hash = await hashPassword(password);
+
+    run("INSERT INTO users (username, full_name, mobile, email, password_hash) VALUES (?,?,?,?,?)",
+        [username, fullName, mobile, email, hash]);
+
+    // Get the new user
+    const newUser = query("SELECT * FROM users WHERE username = ?", [username]);
+    if (!newUser.length) { toast('Registration failed','error'); return; }
+
+    // Create default accounts
+    run("INSERT INTO accounts (user_id, name, type, balance) VALUES (?,?,?,?)",
+        [newUser[0].id, 'Online Account', 'bank', 0]);
+    run("INSERT INTO accounts (user_id, name, type, balance) VALUES (?,?,?,?)",
+        [newUser[0].id, 'Physical Cash', 'cash', 0]);
+
+    toast('Account created successfully!','success');
+    loginAs(newUser[0]);
+}
+
+async function handleLogin(e) {
+    e.preventDefault();
+    clearAuthErrors();
+
+    const identity = document.getElementById('loginIdentity').value.trim();
+    const password = document.getElementById('loginPassword').value;
+
+    if (!identity) { showFieldError('loginIdentityErr','Required'); return; }
+    if (!password) { showFieldError('loginPasswordErr','Required'); return; }
+
+    const hash = await hashPassword(password);
+
+    const user = query(
+        "SELECT * FROM users WHERE (username = ? OR email = ?) AND password_hash = ?",
+        [identity, identity, hash]
+    );
+
+    if (!user.length) {
+        showFieldError('loginPasswordErr','Invalid credentials');
+        return;
+    }
+
+    toast('Welcome back!','success');
+    loginAs(user[0]);
+}
+
+function loginAs(user) {
+    currentUser = user;
+    localStorage.setItem('budgetwise_session', JSON.stringify({userId: user.id}));
+    showApp();
+}
+
+function handleLogout() {
+    currentUser = null;
+    localStorage.removeItem('budgetwise_session');
+    document.getElementById('appScreen').style.display = 'none';
+    document.getElementById('authScreen').style.display = 'flex';
+    // Clear forms
+    document.getElementById('loginForm').reset();
+    document.getElementById('registerForm').reset();
+    switchAuthTab('login');
+}
+
+function checkSession() {
+    const session = localStorage.getItem('budgetwise_session');
+    if (session) {
+        try {
+            const { userId } = JSON.parse(session);
+            const user = query("SELECT * FROM users WHERE id = ?", [userId]);
+            if (user.length) {
+                currentUser = user[0];
+                return true;
+            }
+        } catch(e) {}
+    }
+    return false;
+}
+
+function showApp() {
+    document.getElementById('authScreen').style.display = 'none';
+    document.getElementById('appScreen').style.display = 'block';
+    updateNavbar();
+    populateAllowanceSelect();
+    navigate('dashboard');
+}
+
+function updateNavbar() {
+    if (!currentUser) return;
+    const initials = currentUser.full_name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+    document.getElementById('navAvatar').textContent = initials;
+    document.getElementById('navName').textContent = currentUser.full_name;
+    document.getElementById('navEmail').textContent = currentUser.email;
+}
+
+// ====================== NAVIGATION ======================
+function navigate(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+
+    const pageEl = document.getElementById(page + 'Page');
+    if (pageEl) pageEl.classList.add('active');
+
+    const link = document.querySelector(`.sidebar-link[data-page="${page}"]`);
+    if (link) link.classList.add('active');
+
+    // Close sidebar on mobile
+    document.getElementById('sidebar').classList.remove('open');
+
+    // Render page content
+    switch(page) {
+        case 'dashboard': renderDashboard(); break;
+        case 'accounts': renderAccountsPage(); break;
+        case 'transactions': renderAllTransactions(); break;
+    }
+}
+
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+}
+
+// ====================== DASHBOARD ======================
+function renderDashboard() {
+    if (!currentUser) return;
+    const uid = currentUser.id;
+
+    // Greeting
+    const hour = new Date().getHours();
+    let greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    document.getElementById('dashGreeting').textContent =
+        `${greet}, ${currentUser.full_name.split(' ')[0]}`;
+
+    // Net Worth
+    const accounts = query("SELECT * FROM accounts WHERE user_id = ?", [uid]);
+    const netWorth = accounts.reduce((sum, a) => sum + a.balance, 0);
+    document.getElementById('netWorthValue').textContent = formatCurrency(netWorth);
+    document.getElementById('netWorthSub').textContent = `Across ${accounts.length} account${accounts.length!==1?'s':''}`;
+
+    // Allowance
+    const allowDay = currentUser.allowance_day || 1;
+    const daysLeft = getDaysTilAllowance(allowDay);
+    document.getElementById('allowanceDays').textContent = `${daysLeft} day${daysLeft!==1?'s':''}`;
+    document.getElementById('allowanceSub').textContent = `Arrives on the ${ordinal(allowDay)}`;
+
+    // This month income/expense
+    const now = new Date();
+    const monthStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+
+    const incomeRes = query(
+        "SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id=? AND type='income' AND date LIKE ?",
+        [uid, monthStr + '%']
+    );
+    const expenseRes = query(
+        "SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id=? AND type='expense' AND date LIKE ?",
+        [uid, monthStr + '%']
+    );
+    document.getElementById('monthIncome').textContent = formatCurrency(incomeRes[0]?.total || 0);
+    document.getElementById('monthExpense').textContent = formatCurrency(expenseRes[0]?.total || 0);
+
+    // Accounts Grid
+    renderAccountsGrid('dashAccountsGrid', accounts);
+
+    // Recent Transactions
+    renderRecentTransactions();
+}
+
+function renderRecentTransactions() {
+    const container = document.getElementById('recentTransactions');
+    const txns = query(`
+        SELECT t.*, c.name as cat_name, c.icon as cat_icon, c.color as cat_color, a.name as acc_name
+        FROM transactions t
+        LEFT JOIN categories c ON t.category_id = c.id
+        LEFT JOIN accounts a ON t.account_id = a.id
+        WHERE t.user_id = ?
+        ORDER BY t.date DESC, t.id DESC LIMIT 8
+    `, [currentUser.id]);
+
+    if (!txns.length) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">📝</div>
+                <h3>No transactions yet</h3>
+                <p>Add your first transaction to start tracking your finances</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = txns.map(t => buildTransactionItem(t)).join('');
+}
+
+// ====================== ACCOUNTS ======================
+function renderAccountsGrid(containerId, accountsList) {
+    const container = document.getElementById(containerId);
+    if (!accountsList) {
+        accountsList = query("SELECT * FROM accounts WHERE user_id = ? ORDER BY created_at", [currentUser.id]);
+    }
+
+    let html = accountsList.map(acc => {
+        const icon = ACCOUNT_ICONS[acc.type] || '📦';
+        const color = ACCOUNT_COLORS[acc.type] || '#6B7280';
+        return `
+        <div class="account-card">
+            <div class="account-top">
+                <div class="account-icon">${icon}</div>
+                <div class="account-actions">
+                    <button class="btn-icon" onclick="openAccountModal(${acc.id})" title="Edit">✏️</button>
+                    <button class="btn-icon" onclick="confirmDeleteAccount(${acc.id})" title="Delete">🗑️</button>
+                </div>
+            </div>
+            <div class="account-name">${escapeHtml(acc.name)}</div>
+            <div class="account-balance" style="color:${acc.balance >= 0 ? 'var(--text)' : 'var(--danger)'}">
+                ${formatCurrency(acc.balance)}
+            </div>
+            <span class="account-type-badge" style="background:${color}15; color:${color}">
+                ${acc.type}
+            </span>
+        </div>`;
+    }).join('');
+
+    html += `
+        <div class="add-account-card" onclick="openAccountModal()">
+            <div class="plus">＋</div>
+            <span>Add Account</span>
+        </div>`;
+
+    container.innerHTML = html;
+}
+
+function renderAccountsPage() {
+    const accounts = query("SELECT * FROM accounts WHERE user_id = ? ORDER BY created_at", [currentUser.id]);
+    renderAccountsGrid('accountsPageGrid', accounts);
+}
+
+function openAccountModal(editId = null) {
+    const modal = document.getElementById('accountModal');
+    document.getElementById('accEditId').value = editId || '';
+    document.getElementById('accModalTitle').textContent = editId ? 'Edit Account' : 'Add Account';
+
+    if (editId) {
+        const acc = query("SELECT * FROM accounts WHERE id = ? AND user_id = ?", [editId, currentUser.id]);
+        if (acc.length) {
+            document.getElementById('accName').value = acc[0].name;
+            document.getElementById('accType').value = acc[0].type;
+            document.getElementById('accBalance').value = acc[0].balance;
+        }
+    } else {
+        document.getElementById('accName').value = '';
+        document.getElementById('accType').value = 'bank';
+        document.getElementById('accBalance').value = '';
+    }
+
+    modal.classList.add('open');
+}
+
+function saveAccount() {
+    const editId = document.getElementById('accEditId').value;
+    const name = document.getElementById('accName').value.trim();
+    const type = document.getElementById('accType').value;
+    const balance = parseFloat(document.getElementById('accBalance').value) || 0;
+
+    if (!name) { toast('Account name is required','error'); return; }
+
+    if (editId) {
+        run("UPDATE accounts SET name=?, type=?, balance=? WHERE id=? AND user_id=?",
+            [name, type, balance, parseInt(editId), currentUser.id]);
+        toast('Account updated','success');
+    } else {
+        run("INSERT INTO accounts (user_id, name, type, balance) VALUES (?,?,?,?)",
+            [currentUser.id, name, type, balance]);
+        toast('Account added','success');
+    }
+
+    closeModal('accountModal');
+    refreshCurrentPage();
+}
+
+function confirmDeleteAccount(accId) {
+    const acc = query("SELECT * FROM accounts WHERE id=?", [accId]);
+    document.getElementById('confirmMessage').textContent =
+        `Delete account "${acc[0]?.name || ''}"? All transactions linked to this account will also be deleted.`;
+    document.getElementById('confirmAction').onclick = () => deleteAccount(accId);
+    document.getElementById('confirmModal').classList.add('open');
+}
+
+function deleteAccount(accId) {
+    run("DELETE FROM transactions WHERE account_id=? AND user_id=?", [accId, currentUser.id]);
+    run("DELETE FROM accounts WHERE id=? AND user_id=?", [accId, currentUser.id]);
+    closeModal('confirmModal');
+    toast('Account deleted','success');
+    refreshCurrentPage();
+}
+
+// ====================== TRANSACTIONS ======================
+function openTransactionModal(editId = null) {
+    const modal = document.getElementById('transactionModal');
+    document.getElementById('txnEditId').value = editId || '';
+    document.getElementById('txnModalTitle').textContent = editId ? 'Edit Transaction' : 'Add Transaction';
+
+    // Populate account dropdown
+    const accounts = query("SELECT * FROM accounts WHERE user_id = ?", [currentUser.id]);
+    const accSelect = document.getElementById('txnAccount');
+    accSelect.innerHTML = accounts.map(a =>
+        `<option value="${a.id}">${ACCOUNT_ICONS[a.type]||'📦'} ${escapeHtml(a.name)}</option>`
+    ).join('');
+
+    if (editId) {
+        const txn = query("SELECT * FROM transactions WHERE id=? AND user_id=?", [editId, currentUser.id]);
+        if (txn.length) {
+            const t = txn[0];
+            setTxnType(t.type);
+            document.getElementById('txnTitle').value = t.title;
+            document.getElementById('txnAmount').value = t.amount_formula || t.amount;
+            document.getElementById('txnAccount').value = t.account_id;
+            document.getElementById('txnMerchant').value = t.merchant || '';
+            document.getElementById('txnDate').value = t.date;
+            // Category will be set after populating
+            populateCategoryDropdown(t.type, t.category_id);
+            previewFormula();
+        }
+    } else {
+        setTxnType('expense');
+        document.getElementById('txnTitle').value = '';
+        document.getElementById('txnAmount').value = '';
+        document.getElementById('txnMerchant').value = '';
+        document.getElementById('txnDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('formulaPreview').textContent = '';
+        populateCategoryDropdown('expense');
+    }
+
+    modal.classList.add('open');
+}
+
+function setTxnType(type) {
+    selectedTxnType = type;
+    document.querySelectorAll('.type-toggle-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.type-toggle-btn.${type}-type`).classList.add('active');
+    populateCategoryDropdown(type);
+}
+
+function populateCategoryDropdown(type, selectedId = null) {
+    const cats = query("SELECT * FROM categories WHERE type = ? ORDER BY name", [type]);
+    const select = document.getElementById('txnCategory');
+    select.innerHTML = cats.map(c =>
+        `<option value="${c.id}" ${c.id === selectedId ? 'selected':''}>${c.icon} ${c.name}</option>`
+    ).join('');
+}
+
+function previewFormula() {
+    const input = document.getElementById('txnAmount').value.trim();
+    const preview = document.getElementById('formulaPreview');
+
+    if (!input) { preview.textContent = ''; return; }
+
+    const result = evaluateFormula(input);
+    if (result !== null) {
+        preview.textContent = `= ${formatCurrency(result)}`;
+        preview.className = 'formula-preview valid';
+    } else {
+        preview.textContent = 'Invalid formula';
+        preview.className = 'formula-preview invalid';
+    }
+}
+
+function evaluateFormula(formula) {
+    const sanitized = formula.replace(/[^0-9+\-*/().  ]/g, '').trim();
+    if (!sanitized) return null;
+    try {
+        const result = Function('"use strict"; return (' + sanitized + ')')();
+        if (typeof result !== 'number' || isNaN(result) || !isFinite(result)) return null;
+        return Math.round(result * 100) / 100;
+    } catch { return null; }
+}
+
+function saveTransaction() {
+    const editId = document.getElementById('txnEditId').value;
+    const title = document.getElementById('txnTitle').value.trim();
+    const amountRaw = document.getElementById('txnAmount').value.trim();
+    const accountId = parseInt(document.getElementById('txnAccount').value);
+    const categoryId = parseInt(document.getElementById('txnCategory').value);
+    const merchant = document.getElementById('txnMerchant').value.trim();
+    const date = document.getElementById('txnDate').value;
+
+    // Validation
+    if (!title) { toast('Title is required','error'); return; }
+    const amount = evaluateFormula(amountRaw);
+    if (amount === null || amount <= 0) { toast('Enter a valid amount','error'); return; }
+    if (!accountId) { toast('Select an account','error'); return; }
+    if (!date) { toast('Select a date','error'); return; }
+
+    if (editId) {
+        // Reverse old transaction effect on account
+        const oldTxn = query("SELECT * FROM transactions WHERE id=?", [parseInt(editId)]);
+        if (oldTxn.length) {
+            const old = oldTxn[0];
+            if (old.type === 'income') {
+                run("UPDATE accounts SET balance = balance - ? WHERE id = ?", [old.amount, old.account_id]);
+            } else {
+                run("UPDATE accounts SET balance = balance + ? WHERE id = ?", [old.amount, old.account_id]);
+            }
+        }
+
+        run(`UPDATE transactions SET title=?, amount=?, amount_formula=?, account_id=?,
+             category_id=?, merchant=?, type=?, date=? WHERE id=? AND user_id=?`,
+            [title, amount, amountRaw, accountId, categoryId, merchant,
+             selectedTxnType, date, parseInt(editId), currentUser.id]);
+        toast('Transaction updated','success');
+    } else {
+        run(`INSERT INTO transactions (user_id, account_id, category_id, title, amount,
+             amount_formula, merchant, type, date) VALUES (?,?,?,?,?,?,?,?,?)`,
+            [currentUser.id, accountId, categoryId, title, amount,
+             amountRaw, merchant, selectedTxnType, date]);
+        toast('Transaction added','success');
+    }
+
+    // Update account balance
+    if (selectedTxnType === 'income') {
+        run("UPDATE accounts SET balance = balance + ? WHERE id = ?", [amount, accountId]);
+    } else {
+        run("UPDATE accounts SET balance = balance - ? WHERE id = ?", [amount, accountId]);
+    }
+
+    closeModal('transactionModal');
+    refreshCurrentPage();
+}
+
+function confirmDeleteTransaction(txnId) {
+    document.getElementById('confirmMessage').textContent = 'Delete this transaction? This cannot be undone.';
+    document.getElementById('confirmAction').onclick = () => deleteTransaction(txnId);
+    document.getElementById('confirmModal').classList.add('open');
+}
+
+function deleteTransaction(txnId) {
+    const txn = query("SELECT * FROM transactions WHERE id=? AND user_id=?", [txnId, currentUser.id]);
+    if (txn.length) {
+        const t = txn[0];
+        // Reverse balance effect
+        if (t.type === 'income') {
+            run("UPDATE accounts SET balance = balance - ? WHERE id = ?", [t.amount, t.account_id]);
+        } else {
+            run("UPDATE accounts SET balance = balance + ? WHERE id = ?", [t.amount, t.account_id]);
+        }
+        run("DELETE FROM transactions WHERE id=? AND user_id=?", [txnId, currentUser.id]);
+    }
+    closeModal('confirmModal');
+    toast('Transaction deleted','success');
+    refreshCurrentPage();
+}
+
+function renderAllTransactions() {
+    const filterType = document.getElementById('filterType').value;
+    const filterCat = document.getElementById('filterCategory').value;
+    const filterMonth = document.getElementById('filterMonth').value;
+
+    // Populate category filter
+    const allCats = query("SELECT * FROM categories ORDER BY type, name");
+    const catSelect = document.getElementById('filterCategory');
+    const currentCatVal = catSelect.value;
+    catSelect.innerHTML = '<option value="all">All Categories</option>' +
+        allCats.map(c => `<option value="${c.id}" ${c.id == currentCatVal ? 'selected':''}>${c.icon} ${c.name}</option>`).join('');
+
+    let sql = `SELECT t.*, c.name as cat_name, c.icon as cat_icon, c.color as cat_color, a.name as acc_name
+               FROM transactions t
+               LEFT JOIN categories c ON t.category_id = c.id
+               LEFT JOIN accounts a ON t.account_id = a.id
+               WHERE t.user_id = ?`;
+    const params = [currentUser.id];
+
+    if (filterType !== 'all') { sql += ` AND t.type = ?`; params.push(filterType); }
+    if (filterCat !== 'all') { sql += ` AND t.category_id = ?`; params.push(parseInt(filterCat)); }
+    if (filterMonth) { sql += ` AND t.date LIKE ?`; params.push(filterMonth + '%'); }
+
+    sql += ` ORDER BY t.date DESC, t.id DESC`;
+    const txns = query(sql, params);
+
+    document.getElementById('txnCountLabel').textContent = `${txns.length} transaction${txns.length!==1?'s':''}`;
+
+    const container = document.getElementById('allTransactionsList');
+    if (!txns.length) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">🔍</div>
+                <h3>No transactions found</h3>
+                <p>Try adjusting your filters or add a new transaction</p>
+            </div>`;
+        return;
+    }
+
+    // Group by date
+    const grouped = {};
+    txns.forEach(t => {
+        if (!grouped[t.date]) grouped[t.date] = [];
+        grouped[t.date].push(t);
+    });
+
+    let html = '';
+    for (const [date, items] of Object.entries(grouped)) {
+        const dateObj = new Date(date + 'T00:00:00');
+        const dateLabel = dateObj.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+        const dayTotal = items.reduce((s,t) => s + (t.type==='income' ? t.amount : -t.amount), 0);
+
+        html += `<div style="padding:10px 20px; background:var(--bg); border-bottom:1px solid var(--border);
+                   display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:12px; font-weight:600; color:var(--text2);">${dateLabel}</span>
+                    <span style="font-size:12px; font-weight:700; color:${dayTotal>=0?'var(--success)':'var(--danger)'}">
+                        ${dayTotal>=0?'+':''}${formatCurrency(dayTotal)}
+                    </span>
+                 </div>`;
+        html += items.map(t => buildTransactionItem(t)).join('');
+    }
+
+    container.innerHTML = html;
+}
+
+function buildTransactionItem(t) {
+    const icon = t.cat_icon || '📦';
+    const color = t.cat_color || '#6B7280';
+    const catName = t.cat_name || 'Uncategorized';
+    const isIncome = t.type === 'income';
+
+    let metaParts = [];
+    if (catName) metaParts.push(catName);
+    if (t.merchant) metaParts.push(t.merchant);
+    if (t.acc_name) metaParts.push(t.acc_name);
+
+    return `
+    <div class="transaction-item">
+        <div class="txn-icon" style="background:${color}15; color:${color}">${icon}</div>
+        <div class="txn-details">
+            <div class="txn-title">${escapeHtml(t.title)}</div>
+            <div class="txn-meta">
+                ${metaParts.map(m => `<span>${escapeHtml(m)}</span>`).join('<span>·</span>')}
+            </div>
+        </div>
+        <div class="txn-amount ${t.type}">
+            ${isIncome ? '+' : '-'}${formatCurrency(t.amount)}
+        </div>
+        <div class="txn-actions">
+            <button class="btn-icon" onclick="openTransactionModal(${t.id})" title="Edit">✏️</button>
+            <button class="btn-icon" onclick="confirmDeleteTransaction(${t.id})" title="Delete">🗑️</button>
+        </div>
+    </div>`;
+}
+
+// ====================== ALLOWANCE ======================
+function populateAllowanceSelect() {
+    const select = document.getElementById('allowanceDayInput');
+    select.innerHTML = '';
+    for (let i = 1; i <= 31; i++) {
+        const opt = document.createElement('option');
+        opt.value = i; opt.textContent = ordinal(i) + ' of each month';
+        if (currentUser && currentUser.allowance_day === i) opt.selected = true;
+        select.appendChild(opt);
+    }
+}
+
+function openAllowanceSettings() {
+    document.getElementById('allowanceDayInput').value = currentUser.allowance_day || 1;
+    document.getElementById('allowanceModal').classList.add('open');
+}
+
+function saveAllowanceDay() {
+    const day = parseInt(document.getElementById('allowanceDayInput').value);
+    run("UPDATE users SET allowance_day = ? WHERE id = ?", [day, currentUser.id]);
+    currentUser.allowance_day = day;
+    closeModal('allowanceModal');
+    toast('Allowance day updated','success');
+    renderDashboard();
+}
+
+function getDaysTilAllowance(day) {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const thisMonth = new Date(today.getFullYear(), today.getMonth(), day);
+    if (thisMonth > today) {
+        return Math.ceil((thisMonth - today) / 86400000);
+    }
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, day);
+    return Math.ceil((nextMonth - today) / 86400000);
+}
+
+// ====================== MODALS ======================
+function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+}
+
+// Close modals on overlay click
+document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal-overlay')) {
+        e.target.classList.remove('open');
+    }
+});
+
+// Close modals on Escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+    }
+});
+
+// ====================== UTILITIES ======================
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency', currency: 'USD',
+        minimumFractionDigits: 2, maximumFractionDigits: 2
+    }).format(Math.abs(amount));
+}
+
+function ordinal(n) {
+    const s = ['th','st','nd','rd'];
+    const v = n % 100;
+    return n + (s[(v-20)%10] || s[v] || s[0]);
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+function toast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    const icons = { success:'✓', error:'✕', warning:'⚠', info:'ℹ' };
+    t.innerHTML = `<span>${icons[type]||'ℹ'}</span> ${message}`;
+    container.appendChild(t);
+    setTimeout(() => { t.remove(); }, 3000);
+}
+
+function refreshCurrentPage() {
+    const activePage = document.querySelector('.page.active');
+    if (!activePage) return;
+    const id = activePage.id.replace('Page','');
+    navigate(id);
+}
+
+// ====================== INITIALIZATION ======================
+(async function init() {
+    try {
+        await initDatabase();
+
+        document.getElementById('loadingScreen').style.display = 'none';
+
+        if (checkSession()) {
+            showApp();
+        } else {
+            document.getElementById('authScreen').style.display = 'flex';
+        }
+    } catch(e) {
+        console.error('Init error:', e);
+        document.getElementById('loadingScreen').innerHTML = `
+            <div class="loader-title">Error</div>
+            <p style="color:rgba(255,255,255,0.8); text-align:center; max-width:400px;">
+                Failed to initialize the app. Please refresh the page.<br>
+                <small style="opacity:0.6">${e.message}</small>
+            </p>`;
+    }
+})();
+</script>
+
+</body>
+</html>

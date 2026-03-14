@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BudgetWise | Home</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/variables.css">
+    <link rel="stylesheet" href="assets/css/layout.css">
+    <link rel="stylesheet" href="assets/css/home.css">
+</head>
+<body>
+    <header class="top-nav">
+        <a class="brand" href="home.html">BudgetWise</a>
+        <nav class="tab-nav" id="tabNav">
+            <a href="home.html" class="active">Home</a>
+            <a href="pages/all-transactions.html">All Transactions</a>
+            <a href="pages/monthly-overview.html">Monthly Overview</a>
+            <a href="pages/history.html">History</a>
+        </nav>
+        <div class="nav-meta">Account</div>
+    </header>
+
+    <main>
+        <section class="home-shell">
+            <article class="column">
+                <div class="section-head">
+                    <h1 class="section-title">Transactions</h1>
+                    <button class="pill pill-btn" id="addTransactionBtn" type="button">NEW +</button>
+                </div>
+                <div id="homeTransactions"></div>
+            </article>
+
+            <aside class="column">
+                <div class="section-head">
+                    <h2 class="section-title">Net Worth</h2>
+                    <div class="pill-group">
+                        <button class="pill pill-btn active" id="toggleOwedOff" type="button">Owed Off</button>
+                        <button class="pill pill-btn" id="toggleOwedOn" type="button">Owed On</button>
+                    </div>
+                </div>
+
+                <div class="networth-box">
+                    <p class="networth-value" id="netWorthValue">₱0.00</p>
+                    <p class="subtext" id="netWorthSubtext">Linked to your live database totals</p>
+                    <div class="hero-banner" aria-hidden="true">
+                        <img src="assets/gifs/home.gif" alt="Home banner animation">
+                    </div>
+                </div>
+
+                <section class="accounts">
+                    <div class="section-head">
+                        <h2 class="section-title">Accounts</h2>
+                        <span class="section-total" id="accountsTotalValue">₱0.00</span>
+                        <button class="pill pill-btn" id="addAccountBtn" type="button">ADD +</button>
+                    </div>
+                    <div id="homeAccounts"></div>
+                </section>
+
+                <section class="accounts">
+                    <div class="section-head">
+                        <h2 class="section-title">Money People Owe</h2>
+                        <span class="section-total" id="peopleOweTotalValue">₱0.00</span>
+                        <button class="pill pill-btn" id="addPeopleOweBtn" type="button">ADD +</button>
+                    </div>
+                    <div id="homePeopleOwe"></div>
+                </section>
+
+                <section class="accounts">
+                    <div class="section-head">
+                        <h2 class="section-title">Money People I Owe To</h2>
+                        <span class="section-total" id="peopleIOweTotalValue">₱0.00</span>
+                        <button class="pill pill-btn" id="addPeopleIOweBtn" type="button">ADD +</button>
+                    </div>
+                    <div id="homePeopleIOwe"></div>
+                </section>
+            </aside>
+        </section>
+    </main>
+
+    <div class="txn-modal-overlay" id="txnEditModal" aria-hidden="true">
+        <div class="txn-modal" role="dialog" aria-modal="true" aria-labelledby="txnEditTitle">
+            <button class="txn-modal-close" id="txnModalClose" type="button" aria-label="Close">x</button>
+            <h2 class="txn-modal-title" id="txnEditTitle">Edit Transaction</h2>
+
+            <div class="txn-form-grid">
+                <div class="txn-row-2">
+                    <label class="txn-field">
+                        <span>Type</span>
+                        <select id="editTxnType">
+                            <option value="expense">Expense</option>
+                            <option value="income">Income</option>
+                        </select>
+                    </label>
+                    <label class="txn-field">
+                        <span>Payment Method</span>
+                        <select id="editTxnAccount"></select>
+                    </label>
+                </div>
+
+                <label class="txn-field">
+                    <span>Title</span>
+                    <input type="text" id="editTxnTitle" placeholder="Transaction title">
+                </label>
+
+                <label class="txn-field">
+                    <span>Amount Formula</span>
+                    <input type="text" id="editTxnFormula" placeholder="-69.99 (base game) -14.99 (dlc)">
+                    <small>Use - for expenses, no - for income.</small>
+                </label>
+                <div class="txn-formula-preview" id="editTxnFormulaPreview">= ₱0.00</div>
+
+                <div class="txn-row-2">
+                    <label class="txn-field">
+                        <span>Merchant</span>
+                        <input type="text" id="editTxnMerchant" placeholder="Merchant">
+                    </label>
+                    <label class="txn-field">
+                        <span>Date</span>
+                        <input type="date" id="editTxnDate">
+                    </label>
+                </div>
+
+                <label class="txn-field txn-field-select">
+                    <span>Category</span>
+                    <select id="editTxnCategory"></select>
+                </label>
+
+                <label class="txn-check">
+                    <input type="checkbox" id="editTxnExclude">
+                    <span>Exclude</span>
+                </label>
+            </div>
+
+            <div class="txn-modal-actions">
+                <button type="button" id="editTxnDelete" class="btn-link-danger">Delete</button>
+                <button type="button" id="editTxnCancel" class="btn-soft">Cancel</button>
+                <button type="button" id="editTxnSave" class="btn-save">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="txn-modal-overlay" id="accountModal" aria-hidden="true">
+        <div class="txn-modal" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle">
+            <button class="txn-modal-close" id="accountModalClose" type="button" aria-label="Close">x</button>
+            <h2 class="txn-modal-title" id="accountModalTitle">Add Account</h2>
+
+            <div class="txn-form-grid">
+                <label class="txn-field">
+                    <span>Bank Name</span>
+                    <input type="text" id="accountNameInput" placeholder="e.g. BPI Savings">
+                </label>
+                <label class="txn-field">
+                    <span>Balance</span>
+                    <input type="number" step="0.01" id="accountBalanceInput" placeholder="0.00">
+                </label>
+                <label class="txn-field">
+                    <span>Add / Deduct Amount</span>
+                    <input type="number" step="0.01" id="accountAdjustInput" placeholder="0.00">
+                </label>
+                <div class="txn-row-2">
+                    <button type="button" id="accountAddBalance" class="btn-soft">Add Balance</button>
+                    <button type="button" id="accountDeductBalance" class="btn-soft">Deduct Balance</button>
+                </div>
+            </div>
+
+            <div class="txn-modal-actions">
+                <button type="button" id="accountRemove" class="btn-link-danger">Remove Account</button>
+                <button type="button" id="accountCancel" class="btn-soft">Cancel</button>
+                <button type="button" id="accountSave" class="btn-save">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="txn-modal-overlay" id="peopleModal" aria-hidden="true">
+        <div class="txn-modal" role="dialog" aria-modal="true" aria-labelledby="peopleModalTitle">
+            <button class="txn-modal-close" id="peopleModalClose" type="button" aria-label="Close">x</button>
+            <h2 class="txn-modal-title" id="peopleModalTitle">Money Person Entry</h2>
+
+            <div class="txn-form-grid">
+                <label class="txn-field">
+                    <span>Person Name</span>
+                    <input type="text" id="peopleNameInput" placeholder="Name">
+                </label>
+                <label class="txn-field">
+                    <span>Amount</span>
+                    <input type="number" step="0.01" id="peopleAmountInput" placeholder="0.00">
+                </label>
+                <label class="txn-field">
+                    <span>Add / Deduct Amount</span>
+                    <input type="number" step="0.01" id="peopleAdjustInput" placeholder="0.00">
+                </label>
+                <div class="txn-row-2">
+                    <button type="button" id="peopleAddAmount" class="btn-soft">Add Amount</button>
+                    <button type="button" id="peopleDeductAmount" class="btn-soft">Deduct Amount</button>
+                </div>
+            </div>
+
+            <div class="txn-modal-actions">
+                <button type="button" id="peopleRemove" class="btn-link-danger">Remove Entry</button>
+                <button type="button" id="peopleCancel" class="btn-soft">Cancel</button>
+                <button type="button" id="peopleSave" class="btn-save">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/menu.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    <script src="db.js"></script>
+    <script src="assets/js/app.js"></script>
+</body>
+</html>

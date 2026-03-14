@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BudgetWise | History</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/variables.css">
+    <link rel="stylesheet" href="../assets/css/layout.css">
+    <link rel="stylesheet" href="../assets/css/tab-page.css">
+</head>
+<body>
+    <header class="top-nav">
+        <a class="brand" href="../home.html">BudgetWise</a>
+        <nav class="tab-nav" id="tabNav">
+            <a href="../home.html">Home</a>
+            <a href="all-transactions.html">All Transactions</a>
+            <a href="monthly-overview.html">Monthly Overview</a>
+            <a href="history.html" class="active">History</a>
+        </nav>
+        <div class="nav-meta">Account</div>
+    </header>
+
+    <main class="page-shell">
+        <section class="tab-card">
+            <div class="tab-head">
+                <h1>History</h1>
+                <button type="button">Import</button>
+            </div>
+            <p class="muted">Use this tab for archived months, trend notes, and snapshots. Keeping it separate avoids bloating Home.</p>
+            <ul class="history-list" id="historyList"></ul>
+        </section>
+    </main>
+
+    <script src="../assets/js/menu.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    <script src="../db.js"></script>
+    <script src="../assets/js/app.js"></script>
+</body>
+</html>
