@@ -72,8 +72,17 @@
     margin-left: auto;
     margin-right: 0.5rem;
     font-weight: 900;
-    color: #8b6b00; /* Darker Gold */
     font-size: 0.95rem;
+    color: #8b6b00; /* Fallback gold */
+}
+
+#accountsTotalValue,
+#peopleOweTotalValue {
+    color: #168f61 !important; /* Green */
+}
+
+#peopleIOweTotalValue {
+    color: #b13a5a !important; /* Red */
 }
 
 .pill {
