@@ -152,33 +152,55 @@
   }
 
   function launchNetWorthMood(delta) {
-    const fxHost = document.getElementById('netWorthFx');
-    if (!fxHost || Math.abs(delta) < 0.01) {
+    const hosts = [
+      document.getElementById('netWorthFx'),
+      document.getElementById('homeTransactionsFx')
+    ].filter(Boolean);
+    const moodTargets = [
+      document.querySelector('.networth-box'),
+      document.querySelector('.home-transactions-wrap')
+    ].filter(Boolean);
+
+    if (hosts.length === 0 || Math.abs(delta) < 0.01) {
       return;
     }
 
     const upbeat = delta > 0;
-    const pieces = upbeat ? 28 : 22;
+    const pieces = upbeat ? 42 : 34;
 
-    fxHost.innerHTML = '';
-    fxHost.classList.remove('upbeat', 'downbeat');
-    fxHost.classList.add(upbeat ? 'upbeat' : 'downbeat');
+    moodTargets.forEach((el) => {
+      el.classList.remove('mood-up', 'mood-down');
+      // Trigger reflow so the class animation can restart on consecutive updates.
+      void el.offsetWidth;
+      el.classList.add(upbeat ? 'mood-up' : 'mood-down');
+    });
 
-    for (let i = 0; i < pieces; i += 1) {
-      const particle = document.createElement('span');
-      particle.className = 'networth-particle';
-      particle.style.left = `${6 + Math.random() * 88}%`;
-      particle.style.top = `${upbeat ? 26 + Math.random() * 22 : 2 + Math.random() * 18}%`;
-      particle.style.setProperty('--dx', `${-50 + Math.random() * 100}px`);
-      particle.style.setProperty('--delay', `${Math.random() * 0.24}s`);
-      particle.style.setProperty('--dur', `${0.85 + Math.random() * 0.65}s`);
-      particle.style.setProperty('--rot', `${Math.random() * 360}deg`);
-      fxHost.appendChild(particle);
-    }
-
-    window.setTimeout(function () {
+    hosts.forEach((fxHost) => {
       fxHost.innerHTML = '';
       fxHost.classList.remove('upbeat', 'downbeat');
+      fxHost.classList.add(upbeat ? 'upbeat' : 'downbeat');
+
+      for (let i = 0; i < pieces; i += 1) {
+        const particle = document.createElement('span');
+        particle.className = 'networth-particle';
+        particle.style.left = `${4 + Math.random() * 92}%`;
+        particle.style.top = `${upbeat ? 24 + Math.random() * 26 : 2 + Math.random() * 20}%`;
+        particle.style.setProperty('--dx', `${-90 + Math.random() * 180}px`);
+        particle.style.setProperty('--delay', `${Math.random() * 0.3}s`);
+        particle.style.setProperty('--dur', `${0.95 + Math.random() * 0.75}s`);
+        particle.style.setProperty('--rot', `${Math.random() * 360}deg`);
+        fxHost.appendChild(particle);
+      }
+    });
+
+    window.setTimeout(function () {
+      hosts.forEach((fxHost) => {
+        fxHost.innerHTML = '';
+        fxHost.classList.remove('upbeat', 'downbeat');
+      });
+      moodTargets.forEach((el) => {
+        el.classList.remove('mood-up', 'mood-down');
+      });
     }, 1600);
   }
 

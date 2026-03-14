@@ -198,6 +198,7 @@
     border-radius: 14px;
     overflow: hidden;
     padding: 0.55rem;
+    transform-origin: center;
 }
 
 .home-transactions-wrap::before,
@@ -227,6 +228,16 @@
 .networth-box > * {
     position: relative;
     z-index: 1;
+}
+
+.home-transactions-wrap.mood-up,
+.networth-box.mood-up {
+    animation: moodUpBounce 0.92s cubic-bezier(0.18, 0.8, 0.2, 1);
+}
+
+.home-transactions-wrap.mood-down,
+.networth-box.mood-down {
+    animation: moodDownImpact 0.86s cubic-bezier(0.22, 0.75, 0.2, 1);
 }
 
 #homeTransactions {
@@ -361,11 +372,11 @@
 }
 
 .tx-amount.positive {
-    color: #198754;
+    color: #168f61 !important;
 }
 
 .tx-amount.negative {
-    color: #d63242;
+    color: #b13a5a !important;
 }
 
 .tx-amount.excluded {
@@ -391,6 +402,7 @@
     padding: 1rem;
     position: relative;
     overflow: hidden;
+    transform-origin: center;
 }
 
 .networth-value {
@@ -547,6 +559,45 @@
     }
 }
 
+@keyframes moodUpBounce {
+    0% {
+        transform: scale(1);
+        box-shadow: var(--shadow-md);
+    }
+    18% {
+        transform: scale(1.045) translateY(-3px);
+        box-shadow: 0 20px 38px rgba(20, 145, 85, 0.34);
+    }
+    44% {
+        transform: scale(0.985) translateY(1px);
+    }
+    70% {
+        transform: scale(1.02) translateY(-1px);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: var(--shadow-md);
+    }
+}
+
+@keyframes moodDownImpact {
+    0% {
+        transform: scale(1);
+        box-shadow: var(--shadow-md);
+    }
+    20% {
+        transform: scale(0.965) translateY(2px);
+        box-shadow: 0 20px 38px rgba(171, 49, 71, 0.34);
+    }
+    50% {
+        transform: scale(1.02) translateY(-1px);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: var(--shadow-md);
+    }
+}
+
 .accounts {
     margin-top: 1rem;
 }
@@ -570,6 +621,7 @@
     align-items: center;
     gap: 0.55rem;
     font-weight: 800;
+    transition: transform 0.18s ease;
 }
 
 .account-icon {
@@ -606,6 +658,12 @@
     align-items: center;
     gap: 0.55rem;
     font-weight: 800;
+    transition: transform 0.18s ease;
+}
+
+.account-row:hover .account-name,
+.owe-row:hover .owe-name {
+    transform: scale(1.1);
 }
 
 .owe-value {
