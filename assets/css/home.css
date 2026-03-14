@@ -1,14 +1,14 @@
 .home-layout {
     display: grid;
-    grid-template-columns: minmax(360px, 1.05fr) minmax(0, 1.95fr);
-    gap: 1rem;
+    grid-template-columns: minmax(600px, 2fr) minmax(0, 1fr);
+    gap: 1.2rem;
     align-items: start;
 }
 
 .calendar-shell {
     border: 1px solid rgba(255, 255, 255, 0.45);
     border-radius: var(--radius-lg);
-    padding: 1rem;
+    padding: 1.2rem;
     background: var(--panel-soft);
     box-shadow: var(--shadow-md);
     backdrop-filter: blur(8px);
@@ -24,8 +24,8 @@
     box-shadow: var(--shadow-md);
     backdrop-filter: blur(8px);
     display: grid;
-    gap: 1rem;
-    grid-template-columns: 1.55fr 1fr;
+    gap: 1.2rem;
+    grid-template-columns: 2fr 1fr;
 }
 
 .column {
