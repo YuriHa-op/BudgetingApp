@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const DB_STORAGE_KEY = 'budgetwise_db_v1';
+  const DB_STORAGE_KEY = 'badgetwise_db_v1';
   const SQLJS_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/';
   const SCHEMA_PATH = 'schema.sql';
 

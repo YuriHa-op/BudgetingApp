@@ -1,10 +1,10 @@
 (function () {
   'use strict';
 
-  const ACTIVE_USER_KEY = 'budgetwise_active_user_id';
+  const ACTIVE_USER_KEY = 'badgetwise_active_user_id';
 
   function hashPassword(raw) {
-    const text = `budgetwise::${String(raw || '')}`;
+    const text = `badgetwise::${String(raw || '')}`;
     let hash = 2166136261;
     for (let i = 0; i < text.length; i += 1) {
       hash ^= text.charCodeAt(i);
@@ -107,7 +107,7 @@
         }, 250);
       } catch (error) {
         setFeedback('Unable to create account. Please try again.', 'error');
-        console.error('[BudgetWise] register failed', error);
+        console.error('[BADGETwise] register failed', error);
       }
     });
   }
@@ -171,7 +171,7 @@
   window.addEventListener('DOMContentLoaded', function () {
     start().catch(function (error) {
       setFeedback('Auth page failed to initialize.', 'error');
-      console.error('[BudgetWise] auth bootstrap failed', error);
+      console.error('[BADGETwise] auth bootstrap failed', error);
     });
   });
 })();

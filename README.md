@@ -1,6 +1,6 @@
-# BudgetWise - Personal Finance Tracker
+# BADGETwise - Personal Finance Tracker
 
-BudgetWise is a sleek, local-first personal finance application that helps you track your expenses, income, and net worth with ease. It uses a local SQLite database (via sql.js) to keep your data private and accessible.
+BADGETwise is a sleek, local-first personal finance application that helps you track your expenses, income, and net worth with ease. It uses a local SQLite database (via sql.js) to keep your data private and accessible.
 
 ## Features
 

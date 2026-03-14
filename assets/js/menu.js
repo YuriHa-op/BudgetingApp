@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var TAB_LAST_KEY = 'budgetwise_last_tab';
+  var TAB_LAST_KEY = 'badgetwise_last_tab';
   var nav = document.getElementById('tabNav');
   if (!nav) {
     return;

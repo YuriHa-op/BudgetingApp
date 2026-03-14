@@ -1,17 +1,17 @@
 (function () {
   'use strict';
 
-  const ACTIVE_USER_KEY = 'budgetwise_active_user_id';
-  const DB_BLOB_KEY = 'budgetwise_db_v1';
-  const DATA_VERSION_KEY = 'budgetwise_data_version';
+  const ACTIVE_USER_KEY = 'badgetwise_active_user_id';
+  const DB_BLOB_KEY = 'badgetwise_db_v1';
+  const DATA_VERSION_KEY = 'badgetwise_data_version';
   const DATA_VERSION_VALUE = '3';
-  const EXCLUDED_TX_KEY = 'budgetwise_excluded_tx_ids';
-  const PEOPLE_OWE_KEY = 'budgetwise_people_owe_v1';
-  const PEOPLE_IOWE_KEY = 'budgetwise_people_iowe_v1';
-  const INCLUDE_OWED_KEY = 'budgetwise_include_owed';
-  const WEEKLY_FORECAST_KEY = 'budgetwise_weekly_forecast_v1';
-  const WEEKLY_FORECAST_GOAL_KEY = 'budgetwise_weekly_forecast_goal_v1';
-  const MONTHLY_OVERVIEW_MONTH_KEY = 'budgetwise_monthly_overview_month';
+  const EXCLUDED_TX_KEY = 'badgetwise_excluded_tx_ids';
+  const PEOPLE_OWE_KEY = 'badgetwise_people_owe_v1';
+  const PEOPLE_IOWE_KEY = 'badgetwise_people_iowe_v1';
+  const INCLUDE_OWED_KEY = 'badgetwise_include_owed';
+  const WEEKLY_FORECAST_KEY = 'badgetwise_weekly_forecast_v1';
+  const WEEKLY_FORECAST_GOAL_KEY = 'badgetwise_weekly_forecast_goal_v1';
+  const MONTHLY_OVERVIEW_MONTH_KEY = 'badgetwise_monthly_overview_month';
   const HOME_PAGE = 'home.html';
   const AUTH_PAGE = 'auth.html';
 
@@ -2321,7 +2321,7 @@
 
   window.addEventListener('DOMContentLoaded', function () {
     start().catch(function (error) {
-      console.error('[BudgetWise] app bootstrap failed', error);
+      console.error('[BADGETwise] app bootstrap failed', error);
     });
   });
 })();
