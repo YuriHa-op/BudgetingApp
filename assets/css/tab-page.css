@@ -148,10 +148,12 @@
     border-radius: 10px;
     border: 1px solid rgba(74, 57, 138, 0.16);
     background: rgba(255, 255, 255, 0.95);
-    padding: 0.5rem 0.6rem;
-    margin-bottom: 0.35rem;
+    padding: 0.78rem 0.85rem;
+    margin-bottom: 0.5rem;
+    min-height: 72px;
     font-weight: 700;
     color: #403d73;
+    font-size: 0.98rem;
 }
 
 .txn-list-item:last-child {
@@ -271,14 +273,14 @@ td {
 
 .monthly-pro-title {
     font-family: var(--font-display);
-    font-size: 1.2rem;
+    font-size: 1.35rem;
     color: #2f2f68;
     margin-bottom: 0.45rem;
 }
 
 .mini-note {
     margin-bottom: 0.5rem;
-    font-size: 0.78rem;
+    font-size: 0.9rem;
 }
 
 .monthly-cat-table-wrap {
@@ -298,7 +300,7 @@ td {
 .monthly-cat-table td {
     padding: 0.5rem 0.55rem;
     border-bottom: 1px solid rgba(84, 65, 147, 0.12);
-    font-size: 0.82rem;
+    font-size: 0.94rem;
 }
 
 .monthly-cat-table th {
@@ -353,7 +355,7 @@ td {
 .weekly-spending-item .week-label {
     font-weight: 800;
     color: #4d487f;
-    font-size: 0.78rem;
+    font-size: 0.92rem;
 }
 
 .weekly-spending-item .week-bar {
@@ -373,12 +375,12 @@ td {
 .weekly-spending-item .week-value {
     font-weight: 800;
     color: #3f3a71;
-    font-size: 0.78rem;
+    font-size: 0.92rem;
 }
 
 .weekly-spending-summary {
     margin-top: 0.55rem;
-    font-size: 0.8rem;
+    font-size: 0.95rem;
     color: #454078;
     font-weight: 800;
 }
@@ -390,14 +392,14 @@ td {
 }
 
 .money-io-grid h3 {
-    font-size: 0.8rem;
+    font-size: 0.95rem;
     font-weight: 900;
     color: #4b467d;
 }
 
 .money-io-grid p {
     margin-top: 0.22rem;
-    font-size: 0.92rem;
+    font-size: 1.06rem;
     font-weight: 900;
 }
 
@@ -409,7 +411,7 @@ td {
 
 .money-io-bars span {
     display: block;
-    font-size: 0.74rem;
+    font-size: 0.88rem;
     color: #4c487d;
     font-weight: 800;
 }
@@ -522,7 +524,7 @@ td {
     align-items: center;
     justify-content: space-between;
     gap: 0.4rem;
-    font-size: 0.76rem;
+    font-size: 0.9rem;
     color: #4a467c;
     font-weight: 800;
 }
@@ -614,9 +616,9 @@ td {
     box-shadow: 0 0 0 3px rgba(93, 76, 168, 0.16);
 }
 
-.forecast-results {
-    margin-top: 1rem;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+.forecast-results p {
+    font-size: 1.8rem;
+    font-weight: 900;
 }
 
 .forecast-goal {
