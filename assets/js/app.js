@@ -16,6 +16,7 @@
   let editingTransaction = null;
   let transactionMode = 'edit';
   let homeCalendar = null;
+  let homeTxLimit = 12;
 
   let currentAccountMode = 'create';
   let currentAccount = null;
@@ -453,6 +454,8 @@
         plugins: {
           legend: { display: false },
           tooltip: {
+            titleFont: { size: 14 },
+            bodyFont: { size: 14 },
             callbacks: {
               label: function (context) {
                 return `${context.label}: ${money(context.parsed)}`;
@@ -537,10 +540,13 @@
             position: 'top',
             labels: {
               boxWidth: 12,
-              color: '#4c487d'
+              color: '#4c487d',
+              font: { size: 13 }
             }
           },
           tooltip: {
+            titleFont: { size: 14 },
+            bodyFont: { size: 14 },
             callbacks: {
               label: function (context) {
                 return `${context.dataset.label}: ${money(context.parsed.y)}`;
@@ -550,12 +556,13 @@
         },
         scales: {
           x: {
-            ticks: { maxTicksLimit: 6, color: '#635f8f' },
+            ticks: { maxTicksLimit: 6, color: '#635f8f', font: { size: 12 } },
             grid: { color: 'rgba(102, 80, 171, 0.1)' }
           },
           y: {
             ticks: {
               color: '#635f8f',
+              font: { size: 12 },
               callback: function (value) {
                 return money(value);
               }
@@ -1251,8 +1258,13 @@
 
     const excludedSet = getExcludedSet();
     const allTransactions = db.listTransactions(activeUser.id).filter((txn) => !excludedSet.has(Number(txn.id)));
-    const transactions = allTransactions.slice(0, 12);
+    const transactions = allTransactions.slice(0, homeTxLimit);
     const accounts = db.listAccounts(activeUser.id);
+
+    const showMoreBtn = document.getElementById('showMoreTxBtn');
+    if (showMoreBtn) {
+      showMoreBtn.style.display = allTransactions.length > homeTxLimit ? 'block' : 'none';
+    }
 
     const peopleOweRows = getPeopleByType('owe');
     const peopleIOweRows = getPeopleByType('iowe');
@@ -1997,6 +2009,14 @@
       setIncludeOwed(true);
       renderHome();
     });
+
+    const showMoreBtn = document.getElementById('showMoreTxBtn');
+    if (showMoreBtn) {
+      showMoreBtn.addEventListener('click', function() {
+        homeTxLimit += 12;
+        renderHome();
+      });
+    }
 
     txnClose.addEventListener('click', closeTransactionModal);
     txnCancel.addEventListener('click', closeTransactionModal);

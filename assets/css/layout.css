@@ -8,6 +8,7 @@ html {
     margin: 0;
     padding: 0;
     min-height: 100%;
+    background: url('../images/background.jpg') center/cover no-repeat fixed var(--bg-a);
 }
 
 /* Move background to body for better support */
