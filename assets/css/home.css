@@ -25,7 +25,7 @@
     border: 1px solid rgba(255, 255, 255, 0.45);
     border-radius: var(--radius-lg);
     padding: 1.2rem;
-    background: linear-gradient(rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.25)),
+    background: linear-gradient(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.5)),
                 url('../images/oldmoney.jpg') center/cover no-repeat;
     box-shadow: var(--shadow-md);
     backdrop-filter: blur(8px);
@@ -50,6 +50,11 @@
     color: #b13a5a !important;
 }
 
+.paid {
+    color: #bfa500 !important; /* Gold/Yellow for PAID */
+    font-weight: 900;
+}
+
 .section-head {
     display: flex;
     align-items: center;
@@ -60,14 +65,14 @@
 .section-title {
     font-family: var(--font-display);
     font-size: 1.35rem;
-    color: #32326d;
+    color: #b8860b; /* Goldenrod/Gold */
 }
 
 .section-total {
     margin-left: auto;
     margin-right: 0.5rem;
     font-weight: 900;
-    color: #3f3475;
+    color: #8b6b00; /* Darker Gold */
     font-size: 0.95rem;
 }
 
@@ -76,7 +81,7 @@
     align-items: center;
     justify-content: center;
     border-radius: 999px;
-    border: 1px solid rgba(70, 51, 124, 0.18);
+    border: 1px solid rgba(184, 134, 11, 0.2); /* Gold */
     background: var(--pill-bg);
     color: var(--ink-900);
     font-size: 0.82rem;
@@ -90,8 +95,8 @@
 
 .pill-btn.active {
     background: #fff;
-    border-color: rgba(66, 52, 122, 0.45);
-    box-shadow: 0 4px 10px rgba(70, 49, 124, 0.14);
+    border-color: rgba(184, 134, 11, 0.45); /* Gold */
+    box-shadow: 0 4px 10px rgba(184, 134, 11, 0.14); /* Gold */
 }
 
 .pill-group {

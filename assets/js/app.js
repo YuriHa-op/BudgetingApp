@@ -1256,6 +1256,12 @@
       txnType = direction === 'add' ? 'income' : 'expense';
     }
 
+    // Safeguard for "Money I Owe" (iowe)
+    if (currentPeopleListType === 'iowe' && direction === 'deduct' && adjust > current) {
+      window.alert(`Safequard: You cannot pay more than what you owe (${money(current)}).`);
+      return;
+    }
+
     if (txnType === 'expense') {
       const projected = projectedAccountBalance(accountId, pendingPeopleTxns);
       if (projected === null || projected < adjust) {
@@ -1264,10 +1270,11 @@
       }
     }
 
-    const next = direction === 'add' ? current + adjust : current - adjust;
+    let next = direction === 'add' ? current + adjust : current - adjust;
+    
+    // Auto-reset to 0 if they paid more than owed (for "People Owe Me")
     if (next < 0) {
-      window.alert('Amount cannot go below zero.');
-      return;
+      next = 0;
     }
 
     amountInput.value = String(next);
@@ -1505,7 +1512,7 @@
         return `
           <div class="account-row" data-account-id="${account.id}" title="Click to manage account">
             <p class="account-name"><span class="account-icon">${escapeHtml(initials(account.name))}</span>${escapeHtml(account.name)}</p>
-            <p class="account-value positive">${escapeHtml(money(account.balance))}</p>
+            <p class="account-value section-total">${escapeHtml(money(account.balance))}</p>
           </div>
         `;
       }).join('');
@@ -1515,10 +1522,13 @@
       oweContainer.innerHTML = '<p class="empty-copy">No entries yet.</p>';
     } else {
       oweContainer.innerHTML = peopleOweRows.map((row) => {
+        const isPaid = Number(row.amount) <= 0;
+        const valText = isPaid ? 'PAID' : money(row.amount);
+        const valClass = isPaid ? 'paid' : 'section-total';
         return `
           <div class="owe-row" data-list-type="owe" data-people-id="${row.id}" title="Click to manage entry">
             <p class="owe-name"><span class="account-icon">${escapeHtml(initials(row.name))}</span>${escapeHtml(row.name)}</p>
-            <p class="owe-value positive">${escapeHtml(money(row.amount))}</p>
+            <p class="owe-value ${valClass}">${escapeHtml(valText)}</p>
           </div>
         `;
       }).join('');
@@ -1528,10 +1538,13 @@
       iOweContainer.innerHTML = '<p class="empty-copy">No entries yet.</p>';
     } else {
       iOweContainer.innerHTML = peopleIOweRows.map((row) => {
+        const isPaid = Number(row.amount) <= 0;
+        const valText = isPaid ? 'PAID' : money(row.amount);
+        const valClass = isPaid ? 'paid' : 'negative';
         return `
           <div class="owe-row" data-list-type="iowe" data-people-id="${row.id}" title="Click to manage entry">
             <p class="owe-name"><span class="account-icon">${escapeHtml(initials(row.name))}</span>${escapeHtml(row.name)}</p>
-            <p class="owe-value negative">${escapeHtml(money(row.amount))}</p>
+            <p class="owe-value ${valClass}">${escapeHtml(valText)}</p>
           </div>
         `;
       }).join('');
