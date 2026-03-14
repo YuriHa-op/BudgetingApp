@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BudgetWise | Home</title>
+    <title>BADJETtWise | Home</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -14,7 +14,7 @@
 </head>
 <body>
     <header class="top-nav">
-        <a class="brand" href="home.html">BudgetWise</a>
+        <a class="brand" href="home.html">BADJETWise</a>
         <nav class="tab-nav" id="tabNav">
             <a href="home.html" class="active">Home</a>
             <a href="pages/all-transactions.html">All Transactions</a>
@@ -27,6 +27,10 @@
     <main>
         <section class="home-layout">
             <div class="home-left-col">
+                <div class="calendar-insight-image">
+                    <img src="assets/gifs/monyslamm.gif" alt="Money slam animation">
+                </div>
+
                 <article class="calendar-shell">
                     <div class="section-head">
                         <h1 class="section-title">Transaction Calendar</h1>
@@ -41,10 +45,7 @@
                         <p class="goal-progress-meta" id="goalProgressMeta">Save a goal in Monthly Overview to track it here.</p>
                     </div>
                 </article>
-
-                <div class="calendar-insight-image">
-                    <img src="assets/gifs/monyslamm.gif" alt="Money slam animation">
-                </div>            </div>
+            </div>
 
             <section class="home-shell">
                 <article class="column">
@@ -73,6 +74,7 @@
                 <div class="networth-box">
                     <p class="networth-value" id="netWorthValue">₱0.00</p>
                     <p class="subtext" id="netWorthSubtext">Linked to your live database totals</p>
+                    <div class="networth-fx" id="netWorthFx" aria-hidden="true"></div>
                     <div class="hero-banner" aria-hidden="true">
                         <img src="assets/gifs/home.gif" alt="Home banner animation">
                     </div>

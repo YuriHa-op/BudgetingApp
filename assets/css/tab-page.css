@@ -225,12 +225,17 @@ td {
 }
 
 .positive {
-    color: var(--positive);
+    color: #198754;
     font-weight: 900;
 }
 
 .negative {
-    color: var(--negative);
+    color: #d63242;
+    font-weight: 900;
+}
+
+.excluded {
+    color: #c38b06;
     font-weight: 900;
 }
 

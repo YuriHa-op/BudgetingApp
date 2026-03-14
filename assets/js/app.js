@@ -30,6 +30,7 @@
   let currentPeopleMode = 'create';
   let currentPeopleItem = null;
   let pendingPeopleTxns = [];
+  let lastRenderedNetWorth = null;
   let topCategoriesChart = null;
   let cumulativeChart = null;
 
@@ -85,6 +86,100 @@
       return new Date().toISOString().slice(0, 10);
     }
     return String(isoDate).slice(0, 10);
+  }
+
+  function accountDelta(amount, type, direction) {
+    const normalizedAmount = Number(amount || 0) * Number(direction || 1);
+    return type === 'income' ? normalizedAmount : -normalizedAmount;
+  }
+
+  function getAccountForUser(accountId) {
+    if (!accountId || !activeUser) {
+      return null;
+    }
+    return db.queryValue('SELECT * FROM accounts WHERE id = ? AND user_id = ? LIMIT 1;', [Number(accountId), activeUser.id]);
+  }
+
+  function projectedAccountBalance(accountId, pendingTxns) {
+    const account = getAccountForUser(accountId);
+    if (!account) {
+      return null;
+    }
+
+    let projected = Number(account.balance || 0);
+    const rows = Array.isArray(pendingTxns) ? pendingTxns : [];
+    rows.forEach((txn) => {
+      if (Number(txn.accountId || txn.account_id) === Number(accountId)) {
+        projected += accountDelta(txn.amount, txn.type, 1);
+      }
+    });
+
+    return projected;
+  }
+
+  function ensureTransactionWillNotOverdraw(payload, existingTx) {
+    const projectedByAccount = new Map();
+
+    function applyDelta(accountId, delta) {
+      const key = Number(accountId);
+      if (!Number.isFinite(key)) {
+        return false;
+      }
+
+      let current = projectedByAccount.get(key);
+      if (current === undefined) {
+        const account = getAccountForUser(key);
+        if (!account) {
+          return false;
+        }
+        current = Number(account.balance || 0);
+      }
+
+      const next = current + Number(delta || 0);
+      projectedByAccount.set(key, next);
+      return next >= 0;
+    }
+
+    if (existingTx) {
+      const revertDelta = accountDelta(existingTx.amount, existingTx.type, -1);
+      if (!applyDelta(existingTx.account_id, revertDelta)) {
+        return false;
+      }
+    }
+
+    const applyNewDelta = accountDelta(payload.amount, payload.type, 1);
+    return applyDelta(payload.account_id, applyNewDelta);
+  }
+
+  function launchNetWorthMood(delta) {
+    const fxHost = document.getElementById('netWorthFx');
+    if (!fxHost || Math.abs(delta) < 0.01) {
+      return;
+    }
+
+    const upbeat = delta > 0;
+    const pieces = upbeat ? 28 : 22;
+
+    fxHost.innerHTML = '';
+    fxHost.classList.remove('upbeat', 'downbeat');
+    fxHost.classList.add(upbeat ? 'upbeat' : 'downbeat');
+
+    for (let i = 0; i < pieces; i += 1) {
+      const particle = document.createElement('span');
+      particle.className = 'networth-particle';
+      particle.style.left = `${6 + Math.random() * 88}%`;
+      particle.style.top = `${upbeat ? 26 + Math.random() * 22 : 2 + Math.random() * 18}%`;
+      particle.style.setProperty('--dx', `${-50 + Math.random() * 100}px`);
+      particle.style.setProperty('--delay', `${Math.random() * 0.24}s`);
+      particle.style.setProperty('--dur', `${0.85 + Math.random() * 0.65}s`);
+      particle.style.setProperty('--rot', `${Math.random() * 360}deg`);
+      fxHost.appendChild(particle);
+    }
+
+    window.setTimeout(function () {
+      fxHost.innerHTML = '';
+      fxHost.classList.remove('upbeat', 'downbeat');
+    }, 1600);
   }
 
   function currentPage() {
@@ -718,8 +813,8 @@
         start: String(txn.date).slice(0, 10),
         allDay: true,
         title: `${sign}${money(txn.amount)} · ${txn.title || 'Transaction'}`,
-        backgroundColor: isIncome ? '#1f9f6e' : '#d04a72',
-        borderColor: isIncome ? '#1f9f6e' : '#d04a72',
+        backgroundColor: isIncome ? '#1f9f6e' : '#d63242',
+        borderColor: isIncome ? '#1f9f6e' : '#d63242',
         extendedProps: {
           txnId: Number(txn.id)
         }
@@ -772,9 +867,31 @@
       return;
     }
 
-    homeCalendar.removeAllEvents();
-    events.forEach((eventObj) => {
-      homeCalendar.addEvent(eventObj);
+    homeCalendar.batchRendering(() => {
+      const existingEvents = homeCalendar.getEvents();
+      const existingIds = new Set(existingEvents.map(e => e.id));
+      const newIds = new Set(events.map(e => e.id));
+
+      // Remove events no longer present
+      existingEvents.forEach(e => {
+        if (!newIds.has(e.id)) {
+          e.remove();
+        }
+      });
+
+      // Add or Update
+      events.forEach(eventObj => {
+        const existing = homeCalendar.getEventById(eventObj.id);
+        if (!existing) {
+          homeCalendar.addEvent(eventObj);
+        } else {
+          // Optional: Only update if changed (title/amount/date)
+          if (existing.title !== eventObj.title || existing.startStr !== eventObj.start) {
+            existing.remove();
+            homeCalendar.addEvent(eventObj);
+          }
+        }
+      });
     });
   }
 
@@ -816,6 +933,11 @@
       type,
       date: dateInput.value
     };
+
+    if (!ensureTransactionWillNotOverdraw(payload, transactionMode === 'edit' ? editingTransaction : null)) {
+      window.alert('This transaction would make the selected account negative. Please use an amount within the available balance.');
+      return;
+    }
 
     if (transactionMode === 'add') {
       const created = db.createTransaction({
@@ -938,6 +1060,10 @@
     }
 
     const next = direction === 'add' ? current + adjust : current - adjust;
+    if (next < 0) {
+      window.alert('You cannot deduct more than the available account balance.');
+      return;
+    }
     balanceInput.value = String(next);
     
     pendingAccountTxns.push({
@@ -960,21 +1086,22 @@
 
     const name = nameInput.value.trim();
     const balance = Number(balanceInput.value || 0);
-    if (!name || !Number.isFinite(balance)) {
+    if (!name || !Number.isFinite(balance) || balance < 0) {
+      if (Number.isFinite(balance) && balance < 0) {
+        window.alert('Account balance cannot be negative.');
+      }
       return;
     }
 
     let savedAccount = null;
 
     if (currentAccountMode === 'create') {
-      const result = db.createAccount({
+      savedAccount = db.createAccount({
         user_id: activeUser.id,
         name,
         type: 'bank',
         balance
       });
-      // Look up the created account object
-      savedAccount = db.queryValue('SELECT * FROM accounts WHERE id = ?', [result.id]);
     } else if (currentAccount) {
       savedAccount = db.updateAccount(currentAccount.id, {
         name,
@@ -1116,32 +1243,46 @@
       return;
     }
 
+    const accountId = Number(accountSelect ? accountSelect.value : 0);
+    if (!accountId) {
+      window.alert('Please choose an account so this adjustment is reflected in your balance.');
+      return;
+    }
+
+    let txnType = 'expense';
+    if (currentPeopleListType === 'owe') {
+      txnType = direction === 'add' ? 'expense' : 'income';
+    } else {
+      txnType = direction === 'add' ? 'income' : 'expense';
+    }
+
+    if (txnType === 'expense') {
+      const projected = projectedAccountBalance(accountId, pendingPeopleTxns);
+      if (projected === null || projected < adjust) {
+        window.alert('This deduction is higher than your selected account balance.');
+        return;
+      }
+    }
+
     const next = direction === 'add' ? current + adjust : current - adjust;
+    if (next < 0) {
+      window.alert('Amount cannot go below zero.');
+      return;
+    }
+
     amountInput.value = String(next);
     adjustInput.value = '';
-    if (remarksInput) remarksInput.value = '';
-
-    const accountId = accountSelect ? accountSelect.value : null;
-
-    if (accountId) {
-      let txnType = 'expense';
-      // If "People Owe" (Asset): Add(Lend) = Expense, Deduct(Repay) = Income
-      if (currentPeopleListType === 'owe') {
-        txnType = direction === 'add' ? 'expense' : 'income';
-      } 
-      // If "I Owe" (Liability): Add(Borrow) = Income, Deduct(Pay) = Expense
-      else {
-        txnType = direction === 'add' ? 'income' : 'expense';
-      }
-
-      pendingPeopleTxns.push({
-        accountId,
-        amount: adjust,
-        type: txnType,
-        remarks,
-        date: new Date().toISOString()
-      });
+    if (remarksInput) {
+      remarksInput.value = '';
     }
+
+    pendingPeopleTxns.push({
+      accountId,
+      amount: adjust,
+      type: txnType,
+      remarks,
+      date: new Date().toISOString()
+    });
   }
 
   function savePeopleEntry() {
@@ -1154,6 +1295,15 @@
     const name = nameInput.value.trim();
     const amount = Number(amountInput.value || 0);
     if (!name || !Number.isFinite(amount)) {
+      return;
+    }
+
+    const originalAmount = currentPeopleMode === 'create'
+      ? 0
+      : Number((currentPeopleItem && currentPeopleItem.amount) || 0);
+    const amountChangedManually = Math.abs(amount - originalAmount) > 0.009;
+    if (amountChangedManually && pendingPeopleTxns.length === 0) {
+      window.alert('Use Add Amount or Deduct Amount and choose an account so balances stay synchronized.');
       return;
     }
 
@@ -1179,6 +1329,14 @@
     // Process Pending Transactions
     if (pendingPeopleTxns.length > 0) {
       for (const txn of pendingPeopleTxns) {
+        if (txn.type === 'expense') {
+          const account = getAccountForUser(txn.accountId);
+          if (!account || Number(account.balance || 0) < Number(txn.amount || 0)) {
+            window.alert('One of your selected accounts no longer has enough balance. Please try again.');
+            return;
+          }
+        }
+
         db.createTransaction({
           user_id: activeUser.id,
           account_id: txn.accountId,
@@ -1256,6 +1414,11 @@
     const netWorth = include
       ? (accountsTotal + peopleOweTotal - peopleIOweTotal)
       : accountsTotal;
+
+    if (lastRenderedNetWorth !== null) {
+      launchNetWorthMood(netWorth - lastRenderedNetWorth);
+    }
+    lastRenderedNetWorth = netWorth;
 
     if (accountsTotalValue) {
       accountsTotalValue.textContent = money(accountsTotal);
@@ -1389,6 +1552,7 @@
     const monthFilter = allTxState.month === 'this_month' ? currentMonthKey() : null;
     const yearFilter = allTxState.month === 'this_year' ? currentYearKey() : null;
 
+    const excludedSet = getExcludedSet();
     const rows = db.listTransactions(activeUser.id)
       .filter((txn) => {
         if (monthFilter && String(txn.date).slice(0, 7) !== monthFilter) {
@@ -1434,7 +1598,8 @@
     }
 
     tbody.innerHTML = rows.map((txn) => {
-      const amountClass = txn.type === 'income' ? 'positive' : 'negative';
+      const isExcluded = excludedSet.has(Number(txn.id));
+      const amountClass = isExcluded ? 'excluded' : (txn.type === 'income' ? 'positive' : 'negative');
       const amountPrefix = txn.type === 'income' ? '+' : '-';
       return `
         <tr>
@@ -1449,7 +1614,8 @@
 
     if (listContainer) {
       listContainer.innerHTML = rows.map((txn) => {
-        const amountClass = txn.type === 'income' ? 'positive' : 'negative';
+        const isExcluded = excludedSet.has(Number(txn.id));
+        const amountClass = isExcluded ? 'excluded' : (txn.type === 'income' ? 'positive' : 'negative');
         const amountPrefix = txn.type === 'income' ? '+' : '-';
         return `
           <div class="txn-list-item">
