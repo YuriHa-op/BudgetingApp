@@ -7,20 +7,31 @@
 html,
 body {
     width: 100%;
-    min-height: 100vh;
+    height: 100%; /* Ensure full height logic works */
 }
 
-html {
-    background: radial-gradient(circle at 20% -10%, rgba(255, 255, 255, 0.42), transparent 48%),
-                radial-gradient(circle at 80% 120%, rgba(255, 255, 255, 0.38), transparent 46%),
-                url('../images/background.jpg') center/cover no-repeat fixed;
-    min-height: 100vh;
-}
-
+/* Move background to body for better support */
 body {
     font-family: var(--font-body);
     color: var(--ink-900);
     min-height: 100vh;
+    margin: 0;
+    padding-top: 1rem;
+    
+    /* Layered background: Gradients on top, Image/Color below */
+    background-image: 
+        radial-gradient(circle at 20% -10%, rgba(255, 255, 255, 0.42), transparent 48%),
+        radial-gradient(circle at 80% 120%, rgba(255, 255, 255, 0.38), transparent 46%),
+        url('../images/background.jpg');
+        
+    /* Fallback color if image is missing/loading */
+    background-color: var(--bg-a); 
+    
+    /* Ensure it covers everything and stays fixed */
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
 }
 
 a {
@@ -30,7 +41,7 @@ a {
 
 .top-nav {
     width: min(1200px, calc(100% - 2rem));
-    margin: 1rem auto 0;
+    margin: 0 auto;
     background: rgba(255, 255, 255, 0.72);
     border: 1px solid var(--line);
     border-radius: 16px;

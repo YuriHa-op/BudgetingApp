@@ -15,10 +15,12 @@
 
   let currentAccountMode = 'create';
   let currentAccount = null;
+  let pendingAccountTxns = [];
 
   let currentPeopleListType = 'owe';
   let currentPeopleMode = 'create';
   let currentPeopleItem = null;
+  let pendingPeopleTxns = [];
 
   const allTxState = {
     search: '',
@@ -496,20 +498,23 @@
     const nameInput = document.getElementById('accountNameInput');
     const balanceInput = document.getElementById('accountBalanceInput');
     const adjustInput = document.getElementById('accountAdjustInput');
+    const remarksInput = document.getElementById('accountRemarksInput');
     const removeBtn = document.getElementById('accountRemove');
 
-    if (!modal || !title || !nameInput || !balanceInput || !adjustInput || !removeBtn) {
+    if (!modal || !title || !nameInput || !balanceInput || !adjustInput || !remarksInput || !removeBtn) {
       return;
     }
 
     currentAccountMode = mode;
     currentAccount = null;
+    pendingAccountTxns = [];
 
     if (mode === 'create') {
       title.textContent = 'Add Account';
       nameInput.value = '';
       balanceInput.value = '';
       adjustInput.value = '';
+      remarksInput.value = '';
       removeBtn.style.visibility = 'hidden';
     } else {
       const account = db.queryValue(
@@ -524,6 +529,7 @@
       nameInput.value = account.name;
       balanceInput.value = String(Number(account.balance || 0));
       adjustInput.value = '';
+      remarksInput.value = '';
       removeBtn.style.visibility = 'visible';
     }
 
@@ -539,24 +545,38 @@
     modal.classList.remove('open');
     modal.setAttribute('aria-hidden', 'true');
     currentAccount = null;
+    pendingAccountTxns = [];
   }
 
   function adjustAccountBalance(direction) {
     const balanceInput = document.getElementById('accountBalanceInput');
     const adjustInput = document.getElementById('accountAdjustInput');
+    const remarksInput = document.getElementById('accountRemarksInput');
+
     if (!balanceInput || !adjustInput) {
       return;
     }
 
     const current = Number(balanceInput.value || 0);
     const adjust = Math.abs(Number(adjustInput.value || 0));
+    const remarks = remarksInput ? remarksInput.value.trim() : '';
+
     if (!Number.isFinite(adjust) || adjust <= 0) {
       return;
     }
 
     const next = direction === 'add' ? current + adjust : current - adjust;
     balanceInput.value = String(next);
+    
+    pendingAccountTxns.push({
+      type: direction,
+      amount: adjust,
+      remarks: remarks,
+      date: new Date().toISOString()
+    });
+
     adjustInput.value = '';
+    if (remarksInput) remarksInput.value = '';
   }
 
   function saveAccount() {
@@ -572,19 +592,41 @@
       return;
     }
 
+    let savedAccount = null;
+
     if (currentAccountMode === 'create') {
-      db.createAccount({
+      const result = db.createAccount({
         user_id: activeUser.id,
         name,
         type: 'bank',
         balance
       });
+      // Look up the created account object
+      savedAccount = db.queryValue('SELECT * FROM accounts WHERE id = ?', [result.id]);
     } else if (currentAccount) {
-      db.updateAccount(currentAccount.id, {
+      savedAccount = db.updateAccount(currentAccount.id, {
         name,
         balance,
+        // Preserve existing type if any
         type: currentAccount.type
       });
+    }
+
+    if (savedAccount && pendingAccountTxns.length > 0) {
+      for (const txn of pendingAccountTxns) {
+        db.createTransaction({
+          user_id: activeUser.id,
+          account_id: savedAccount.id,
+          title: txn.remarks || (txn.type === 'add' ? 'Manual Deposit' : 'Manual Withdrawal'),
+          amount: txn.amount,
+          type: txn.type === 'add' ? 'income' : 'expense',
+          date: txn.date,
+          merchant: 'Account Adjustment'
+        });
+      }
+      // Force the balance back to what the user entered, 
+      // ensuring the manual entry overrides the transaction delta logic
+      db.updateAccount(savedAccount.id, { balance });
     }
 
     closeAccountModal();
@@ -606,21 +648,42 @@
     renderHome();
   }
 
+  function fillPeopleAccountSelect(selectedId) {
+    const select = document.getElementById('peopleAccountSelect');
+    if (!select) return;
+    
+    select.innerHTML = '<option value="">(None - No Transaction)</option>';
+    const accounts = db.listAccounts(activeUser.id);
+    
+    accounts.forEach((acc) => {
+      const opt = document.createElement('option');
+      opt.value = acc.id;
+      opt.textContent = acc.name;
+      if (selectedId && String(acc.id) === String(selectedId)) {
+        opt.selected = true;
+      }
+      select.appendChild(opt);
+    });
+  }
+
   function openPeopleModal(mode, listType, itemId) {
     const modal = document.getElementById('peopleModal');
     const title = document.getElementById('peopleModalTitle');
     const nameInput = document.getElementById('peopleNameInput');
     const amountInput = document.getElementById('peopleAmountInput');
     const adjustInput = document.getElementById('peopleAdjustInput');
+    const remarksInput = document.getElementById('peopleRemarksInput');
     const removeBtn = document.getElementById('peopleRemove');
 
-    if (!modal || !title || !nameInput || !amountInput || !adjustInput || !removeBtn) {
+    if (!modal || !title || !nameInput || !amountInput || !adjustInput || !remarksInput || !removeBtn) {
       return;
     }
 
     currentPeopleListType = listType;
     currentPeopleMode = mode;
     currentPeopleItem = null;
+    pendingPeopleTxns = [];
+    fillPeopleAccountSelect(null);
 
     const titlePrefix = listType === 'iowe' ? 'Money I Owe To' : 'Money People Owe';
 
@@ -629,6 +692,7 @@
       nameInput.value = '';
       amountInput.value = '';
       adjustInput.value = '';
+      remarksInput.value = '';
       removeBtn.style.visibility = 'hidden';
     } else {
       const rows = getPeopleByType(listType);
@@ -642,6 +706,7 @@
       nameInput.value = found.name;
       amountInput.value = String(Number(found.amount || 0));
       adjustInput.value = '';
+      remarksInput.value = '';
       removeBtn.style.visibility = 'visible';
     }
 
@@ -657,17 +722,24 @@
     modal.classList.remove('open');
     modal.setAttribute('aria-hidden', 'true');
     currentPeopleItem = null;
+    pendingPeopleTxns = [];
   }
 
   function adjustPeopleAmount(direction) {
+    const nameInput = document.getElementById('peopleNameInput');
     const amountInput = document.getElementById('peopleAmountInput');
     const adjustInput = document.getElementById('peopleAdjustInput');
+    const remarksInput = document.getElementById('peopleRemarksInput');
+    const accountSelect = document.getElementById('peopleAccountSelect');
+
     if (!amountInput || !adjustInput) {
       return;
     }
 
     const current = Number(amountInput.value || 0);
     const adjust = Math.abs(Number(adjustInput.value || 0));
+    const remarks = remarksInput ? remarksInput.value.trim() : '';
+
     if (!Number.isFinite(adjust) || adjust <= 0) {
       return;
     }
@@ -675,6 +747,29 @@
     const next = direction === 'add' ? current + adjust : current - adjust;
     amountInput.value = String(next);
     adjustInput.value = '';
+    if (remarksInput) remarksInput.value = '';
+
+    const accountId = accountSelect ? accountSelect.value : null;
+
+    if (accountId) {
+      let txnType = 'expense';
+      // If "People Owe" (Asset): Add(Lend) = Expense, Deduct(Repay) = Income
+      if (currentPeopleListType === 'owe') {
+        txnType = direction === 'add' ? 'expense' : 'income';
+      } 
+      // If "I Owe" (Liability): Add(Borrow) = Income, Deduct(Pay) = Expense
+      else {
+        txnType = direction === 'add' ? 'income' : 'expense';
+      }
+
+      pendingPeopleTxns.push({
+        accountId,
+        amount: adjust,
+        type: txnType,
+        remarks,
+        date: new Date().toISOString()
+      });
+    }
   }
 
   function savePeopleEntry() {
@@ -706,6 +801,23 @@
           name,
           amount
         };
+      }
+    }
+
+    // Process Pending Transactions
+    if (pendingPeopleTxns.length > 0) {
+      for (const txn of pendingPeopleTxns) {
+        db.createTransaction({
+          user_id: activeUser.id,
+          account_id: txn.accountId,
+          title: txn.remarks || (currentPeopleListType === 'owe' 
+             ? (txn.type === 'expense' ? 'Lent Money' : 'Repayment Received')
+             : (txn.type === 'income' ? 'Borrowed Money' : 'Debt Payment')),
+          amount: txn.amount,
+          type: txn.type,
+          merchant: name, // Person name as merchant
+          date: txn.date
+        });
       }
     }
 

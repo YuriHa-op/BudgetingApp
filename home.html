@@ -160,6 +160,10 @@
                     <span>Add / Deduct Amount</span>
                     <input type="number" step="0.01" id="accountAdjustInput" placeholder="0.00">
                 </label>
+                <label class="txn-field" style="grid-column: 1 / -1;">
+                    <span>Remarks (Optional)</span>
+                    <input type="text" id="accountRemarksInput" placeholder="Reason for adjustment">
+                </label>
                 <div class="txn-row-2">
                     <button type="button" id="accountAddBalance" class="btn-soft">Add Balance</button>
                     <button type="button" id="accountDeductBalance" class="btn-soft">Deduct Balance</button>
@@ -191,6 +195,16 @@
                 <label class="txn-field">
                     <span>Add / Deduct Amount</span>
                     <input type="number" step="0.01" id="peopleAdjustInput" placeholder="0.00">
+                </label>
+                <label class="txn-field">
+                    <span>Account (For Transaction)</span>
+                    <select id="peopleAccountSelect">
+                        <option value="">(None - No Transaction)</option>
+                    </select>
+                </label>
+                <label class="txn-field" style="grid-column: 1 / -1;">
+                    <span>Remarks (Optional)</span>
+                    <input type="text" id="peopleRemarksInput" placeholder="Reason for adjustment">
                 </label>
                 <div class="txn-row-2">
                     <button type="button" id="peopleAddAmount" class="btn-soft">Add Amount</button>
